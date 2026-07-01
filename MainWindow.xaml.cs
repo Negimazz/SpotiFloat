@@ -1,8 +1,9 @@
 // File: MainWindow.xaml.cs
 // What it does: Connects the overlay UI to Spotify playback data.
-// Why it exists: Keeps window behavior, refresh timing, and display updates together.
-// RELATED FILES: MainWindow.xaml, Services/SpotifyAuthService.cs, Services/SpotifyPlaybackService.cs, Models/SpotifyNowPlaying.cs
+// Why it exists: Keeps window behavior, tray actions, refresh timing, and display updates together.
+// RELATED FILES: MainWindow.xaml, SettingsWindow.xaml, Services/SpotifyAuthService.cs, Services/SpotifyPlaybackService.cs
 
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -10,39 +11,57 @@ using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using SpotiFloat.Models;
 using SpotiFloat.Services;
+using Drawing = System.Drawing;
+using Forms = System.Windows.Forms;
 
 namespace SpotiFloat;
 
 public partial class MainWindow : Window
 {
-    private readonly SpotifyAuthService authService = new();
+    private readonly AppSettingsService settingsService = new();
+    private readonly SpotifyAuthService authService;
     private readonly SpotifyPlaybackService playbackService;
     private readonly DispatcherTimer refreshTimer = new();
+    private readonly Forms.NotifyIcon trayIcon = new();
+    private bool isExitRequested;
     private SpotifyNowPlaying? currentTrack;
 
     public MainWindow()
     {
         InitializeComponent();
 
+        authService = new SpotifyAuthService(settingsService);
         playbackService = new SpotifyPlaybackService(authService);
         refreshTimer.Interval = TimeSpan.FromSeconds(2);
         refreshTimer.Tick += async (_, _) => await RefreshPlaybackAsync();
+
+        ConfigureTrayIcon();
     }
 
     private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
-        ConnectButton.Visibility = authService.IsConfigured ? Visibility.Visible : Visibility.Collapsed;
-
         if (!authService.IsConfigured)
         {
-            SetMessage("Spotify setup needed", "Set SPOTIFLOAT_SPOTIFY_CLIENT_ID");
+            SetMessage("Spotify setup needed", "Right-click tray icon");
             return;
         }
 
         await authService.LoadSavedTokenAsync();
-        ConnectButton.Visibility = authService.HasToken ? Visibility.Collapsed : Visibility.Visible;
         refreshTimer.Start();
         await RefreshPlaybackAsync();
+    }
+
+    private void Window_Closing(object? sender, CancelEventArgs e)
+    {
+        if (!isExitRequested)
+        {
+            e.Cancel = true;
+            Hide();
+            return;
+        }
+
+        trayIcon.Visible = false;
+        trayIcon.Dispose();
     }
 
     private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -50,31 +69,88 @@ public partial class MainWindow : Window
         DragMove();
     }
 
-    private async void ConnectButton_Click(object sender, RoutedEventArgs e)
+    private void ConfigureTrayIcon()
     {
-        ConnectButton.IsEnabled = false;
+        var menu = new Forms.ContextMenuStrip();
+        menu.Items.Add("Set Spotify Client ID", null, (_, _) => OpenSettings());
+        menu.Items.Add("Connect / Reconnect Spotify", null, async (_, _) => await ConnectSpotifyAsync());
+        menu.Items.Add("Show / Hide Overlay", null, (_, _) => ToggleOverlay());
+        menu.Items.Add("Refresh Now", null, async (_, _) => await RefreshPlaybackAsync());
+        menu.Items.Add(new Forms.ToolStripSeparator());
+        menu.Items.Add("Exit", null, (_, _) => ExitApplication());
+
+        trayIcon.Icon = Drawing.SystemIcons.Application;
+        trayIcon.Text = "SpotiFloat";
+        trayIcon.ContextMenuStrip = menu;
+        trayIcon.Visible = true;
+        trayIcon.DoubleClick += (_, _) => ToggleOverlay();
+    }
+
+    private void OpenSettings()
+    {
+        var window = new SettingsWindow(settingsService)
+        {
+            Owner = IsVisible ? this : null
+        };
+
+        if (window.ShowDialog() == true)
+        {
+            _ = ResetConnectionAfterSettingsChangeAsync();
+        }
+    }
+
+    private async Task ResetConnectionAfterSettingsChangeAsync()
+    {
+        await authService.ClearSavedTokenAsync();
+        SetMessage("Spotify Client ID saved", "Reconnect from tray menu");
+    }
+
+    private async Task ConnectSpotifyAsync()
+    {
+        if (!authService.IsConfigured)
+        {
+            OpenSettings();
+            return;
+        }
+
         SetMessage("Connecting Spotify", "Approve access in your browser");
 
         try
         {
+            await authService.ClearSavedTokenAsync();
             await authService.SignInAsync();
-            ConnectButton.Visibility = Visibility.Collapsed;
             refreshTimer.Start();
             await RefreshPlaybackAsync();
         }
         catch (Exception ex)
         {
             SetMessage("Spotify connection failed", ex.Message);
-            ConnectButton.IsEnabled = true;
         }
+    }
+
+    private void ToggleOverlay()
+    {
+        if (IsVisible)
+        {
+            Hide();
+            return;
+        }
+
+        Show();
+        Activate();
+    }
+
+    private void ExitApplication()
+    {
+        isExitRequested = true;
+        Close();
     }
 
     private async Task RefreshPlaybackAsync()
     {
         if (!authService.HasToken)
         {
-            ConnectButton.Visibility = Visibility.Visible;
-            SetMessage("SpotiFloat", "Connect Spotify to start");
+            SetMessage("SpotiFloat", "Right-click tray icon to connect");
             return;
         }
 
@@ -84,11 +160,10 @@ public partial class MainWindow : Window
 
             if (currentTrack is null)
             {
-                SetMessage("Spotify is not playing", "Other apps are ignored");
+                SetMessage("Spotify is not playing", "Play music in Spotify");
                 return;
             }
 
-            ConnectButton.Visibility = Visibility.Collapsed;
             TitleText.Text = currentTrack.Title;
             ArtistText.Text = currentTrack.Artist;
             SetAlbumArt(currentTrack.AlbumArtUrl);
@@ -105,7 +180,7 @@ public partial class MainWindow : Window
         currentTrack = null;
         TitleText.Text = title;
         ArtistText.Text = subtitle;
-        AlbumArtBox.Background = new SolidColorBrush(Color.FromRgb(35, 35, 40));
+        AlbumArtBox.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(35, 35, 40));
         AlbumPlaceholder.Visibility = Visibility.Visible;
         SetProgress(0, 1);
     }
@@ -114,7 +189,7 @@ public partial class MainWindow : Window
     {
         if (string.IsNullOrWhiteSpace(url))
         {
-            AlbumArtBox.Background = new SolidColorBrush(Color.FromRgb(35, 35, 40));
+            AlbumArtBox.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(35, 35, 40));
             AlbumPlaceholder.Visibility = Visibility.Visible;
             return;
         }

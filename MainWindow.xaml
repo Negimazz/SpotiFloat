@@ -14,8 +14,9 @@ RELATED FILES: MainWindow.xaml.cs, Services/SpotifyPlaybackService.cs, Models/Sp
         AllowsTransparency="True"
         Background="Transparent"
         ResizeMode="NoResize"
-        ShowInTaskbar="True"
+        ShowInTaskbar="False"
         Topmost="True"
+        Closing="Window_Closing"
         Loaded="Window_Loaded"
         MouseLeftButtonDown="Window_MouseLeftButtonDown">
     <Grid>
@@ -94,19 +95,5 @@ RELATED FILES: MainWindow.xaml.cs, Services/SpotifyPlaybackService.cs, Models/Sp
             </Grid>
         </Border>
 
-        <Button x:Name="ConnectButton"
-                Width="132"
-                Height="30"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Bottom"
-                Margin="0,0,20,18"
-                Click="ConnectButton_Click"
-                Content="Connect Spotify"
-                Background="#FF1DB954"
-                BorderThickness="0"
-                Foreground="White"
-                FontSize="12"
-                FontWeight="SemiBold"
-                Cursor="Hand" />
     </Grid>
 </Window>

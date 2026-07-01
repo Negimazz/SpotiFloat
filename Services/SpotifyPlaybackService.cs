@@ -24,12 +24,25 @@ public sealed class SpotifyPlaybackService
     public async Task<SpotifyNowPlaying?> GetNowPlayingAsync()
     {
         var accessToken = await authService.GetAccessTokenAsync();
-        using var request = new HttpRequestMessage(
-            HttpMethod.Get,
-            "https://api.spotify.com/v1/me/player/currently-playing?market=from_token");
+        return await GetFromEndpointAsync(
+            "https://api.spotify.com/v1/me/player/currently-playing?market=from_token",
+            accessToken)
+            ?? await GetFromEndpointAsync(
+                "https://api.spotify.com/v1/me/player?market=from_token",
+                accessToken);
+    }
+
+    private async Task<SpotifyNowPlaying?> GetFromEndpointAsync(string url, string accessToken)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, url);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         using var response = await httpClient.SendAsync(request);
+        if (response.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            throw new InvalidOperationException("Spotify authorization expired. Reconnect from the tray menu.");
+        }
+
         if (response.StatusCode == HttpStatusCode.NoContent || response.StatusCode == HttpStatusCode.NotFound)
         {
             return null;

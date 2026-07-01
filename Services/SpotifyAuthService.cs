@@ -15,10 +15,10 @@ namespace SpotiFloat.Services;
 
 public sealed class SpotifyAuthService
 {
-    private const string ClientIdEnvName = "SPOTIFLOAT_SPOTIFY_CLIENT_ID";
     private const string RedirectUri = "http://127.0.0.1:54321/callback/";
     private const string Scope = "user-read-currently-playing user-read-playback-state";
 
+    private readonly AppSettingsService settingsService;
     private readonly HttpClient httpClient = new();
     private readonly string tokenPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
@@ -30,7 +30,12 @@ public sealed class SpotifyAuthService
     public bool IsConfigured => !string.IsNullOrWhiteSpace(ClientId);
     public bool HasToken => token is not null;
 
-    private string ClientId => Environment.GetEnvironmentVariable(ClientIdEnvName) ?? "";
+    private string ClientId => settingsService.ClientId;
+
+    public SpotifyAuthService(AppSettingsService settingsService)
+    {
+        this.settingsService = settingsService;
+    }
 
     public async Task LoadSavedTokenAsync()
     {
@@ -47,7 +52,7 @@ public sealed class SpotifyAuthService
     {
         if (!IsConfigured)
         {
-            throw new InvalidOperationException($"Set {ClientIdEnvName} first.");
+            throw new InvalidOperationException("Set Spotify Client ID from the tray menu first.");
         }
 
         var verifier = CreateCodeVerifier();
@@ -78,6 +83,16 @@ public sealed class SpotifyAuthService
 
         token = await RequestTokenAsync(code, verifier);
         await SaveTokenAsync();
+    }
+
+    public async Task ClearSavedTokenAsync()
+    {
+        token = null;
+
+        if (File.Exists(tokenPath))
+        {
+            await Task.Run(() => File.Delete(tokenPath));
+        }
     }
 
     public async Task<string> GetAccessTokenAsync()
