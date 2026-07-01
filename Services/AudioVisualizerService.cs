@@ -54,6 +54,7 @@ public sealed class AudioVisualizerService : IDisposable
 
         var bands = new double[count];
         var usableBins = FftSize / 2;
+        var total = 0.0;
         for (var band = 0; band < count; band++)
         {
             var start = 1 + band * usableBins / count;
@@ -66,7 +67,13 @@ public sealed class AudioVisualizerService : IDisposable
                 peak = Math.Max(peak, magnitude);
             }
 
-            bands[band] = Math.Clamp(Math.Log10(1 + peak * 80), 0, 1);
+            total += peak;
+            bands[band] = Math.Clamp(Math.Pow(Math.Log10(1 + peak * 260), 0.72), 0, 1);
+        }
+
+        if (total < 0.006)
+        {
+            Array.Fill(bands, 0);
         }
 
         return bands;

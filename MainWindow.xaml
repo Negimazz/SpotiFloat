@@ -198,7 +198,7 @@ RELATED FILES: MainWindow.xaml.cs, Services/SpotifyPlaybackService.cs, Models/Sp
                 <Grid.RowDefinitions>
                     <RowDefinition Height="258" />
                     <RowDefinition Height="1" />
-                    <RowDefinition Height="*" />
+                    <RowDefinition Height="205" />
                 </Grid.RowDefinitions>
 
                 <Grid Grid.Row="0">
@@ -335,8 +335,7 @@ RELATED FILES: MainWindow.xaml.cs, Services/SpotifyPlaybackService.cs, Models/Sp
                 <Grid Grid.Row="2" Margin="0,19,0,0">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
-                        <RowDefinition Height="96" />
-                        <RowDefinition Height="*" />
+                        <RowDefinition Height="124" />
                     </Grid.RowDefinitions>
 
                     <Grid>
@@ -357,7 +356,7 @@ RELATED FILES: MainWindow.xaml.cs, Services/SpotifyPlaybackService.cs, Models/Sp
 
                     <Border Grid.Row="1"
                             Margin="0,14,0,0"
-                            Padding="16,12"
+                            Padding="16,10"
                             Background="#8A151C22"
                             BorderBrush="#306FDDF3"
                             BorderThickness="1"
@@ -369,38 +368,29 @@ RELATED FILES: MainWindow.xaml.cs, Services/SpotifyPlaybackService.cs, Models/Sp
 
                     <Grid x:Name="VisualizerGrid"
                           Grid.Row="1"
-                          Margin="16,23,16,9">
+                          Margin="16,21,16,0">
                         <UniformGrid Columns="20" VerticalAlignment="Bottom">
-                            <Border Height="34" Margin="5,0" Background="#A5BDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz01" ScaleY="0.55" /></Border.RenderTransform></Border>
-                            <Border Height="58" Margin="5,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz02" ScaleY="0.75" /></Border.RenderTransform></Border>
-                            <Border Height="78" Margin="5,0" Background="#D0BDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz03" ScaleY="0.45" /></Border.RenderTransform></Border>
-                            <Border Height="50" Margin="5,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz04" ScaleY="0.68" /></Border.RenderTransform></Border>
-                            <Border Height="82" Margin="5,0" Background="#E29FE8FF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz05" ScaleY="0.42" /></Border.RenderTransform></Border>
-                            <Border Height="44" Margin="5,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz06" ScaleY="0.7" /></Border.RenderTransform></Border>
-                            <Border Height="70" Margin="5,0" Background="#D8BDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz07" ScaleY="0.5" /></Border.RenderTransform></Border>
-                            <Border Height="54" Margin="5,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz08" ScaleY="0.82" /></Border.RenderTransform></Border>
-                            <Border Height="86" Margin="5,0" Background="#E29FE8FF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz09" ScaleY="0.58" /></Border.RenderTransform></Border>
-                            <Border Height="46" Margin="5,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz10" ScaleY="0.64" /></Border.RenderTransform></Border>
-                            <Border Height="62" Margin="5,0" Background="#C8BDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz11" ScaleY="0.48" /></Border.RenderTransform></Border>
-                            <Border Height="80" Margin="5,0" Background="#D89FE8FF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz12" ScaleY="0.7" /></Border.RenderTransform></Border>
-                            <Border Height="42" Margin="5,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz13" ScaleY="0.5" /></Border.RenderTransform></Border>
-                            <Border Height="74" Margin="5,0" Background="#D0BDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz14" ScaleY="0.84" /></Border.RenderTransform></Border>
-                            <Border Height="52" Margin="5,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz15" ScaleY="0.44" /></Border.RenderTransform></Border>
-                            <Border Height="84" Margin="5,0" Background="#E29FE8FF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz16" ScaleY="0.62" /></Border.RenderTransform></Border>
-                            <Border Height="48" Margin="5,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz17" ScaleY="0.76" /></Border.RenderTransform></Border>
-                            <Border Height="68" Margin="5,0" Background="#D0BDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz18" ScaleY="0.54" /></Border.RenderTransform></Border>
-                            <Border Height="38" Margin="5,0" Background="#A5BDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz19" ScaleY="0.68" /></Border.RenderTransform></Border>
-                            <Border Height="76" Margin="5,0" Background="#D89FE8FF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz20" ScaleY="0.46" /></Border.RenderTransform></Border>
+                            <Border Height="92" Margin="5,0" Background="#A5BDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz01" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="92" Margin="5,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz02" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="92" Margin="5,0" Background="#D0BDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz03" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="92" Margin="5,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz04" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="92" Margin="5,0" Background="#E29FE8FF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz05" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="92" Margin="5,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz06" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="92" Margin="5,0" Background="#D8BDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz07" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="92" Margin="5,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz08" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="92" Margin="5,0" Background="#E29FE8FF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz09" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="92" Margin="5,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz10" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="92" Margin="5,0" Background="#C8BDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz11" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="92" Margin="5,0" Background="#D89FE8FF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz12" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="92" Margin="5,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz13" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="92" Margin="5,0" Background="#D0BDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz14" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="92" Margin="5,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz15" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="92" Margin="5,0" Background="#E29FE8FF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz16" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="92" Margin="5,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz17" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="92" Margin="5,0" Background="#D0BDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz18" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="92" Margin="5,0" Background="#A5BDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz19" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="92" Margin="5,0" Background="#D89FE8FF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz20" ScaleY="0.18" /></Border.RenderTransform></Border>
                         </UniformGrid>
-                    </Grid>
-
-                    <Grid Grid.Row="2" Margin="0,18,0,0">
-                        <TextBlock Foreground="#AEEAF7FF"
-                                   FontFamily="Consolas"
-                                   FontSize="12"
-                                   Text="Right click or Ctrl+Alt+M to close menu"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Bottom" />
                     </Grid>
                 </Grid>
             </Grid>

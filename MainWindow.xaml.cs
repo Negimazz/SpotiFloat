@@ -30,7 +30,7 @@ public partial class MainWindow : Window
     private const double CompactWidth = 342;
     private const double CompactHeight = 92;
     private const double MenuWidth = 736;
-    private const double MenuHeight = 576;
+    private const double MenuHeight = 512;
 
     private readonly SpotifyPlaybackService playbackService = new();
     private readonly DispatcherTimer refreshTimer = new();
@@ -363,12 +363,14 @@ public partial class MainWindow : Window
     {
         var bars = GetVisualizerBars();
         var levels = audioVisualizerService.GetBands(bars.Length);
+        var isSilent = levels.All(level => level <= 0);
         for (var i = 0; i < bars.Length; i++)
         {
             var level = i < levels.Length ? levels[i] : 0;
             var target = isPlaybackMoving
-                ? 0.12 + level * 0.88
+                ? isSilent ? 0.18 : 0.18 + level * 1.22
                 : 0.12;
+            target = Math.Clamp(target, 0.12, 1.18);
             Animate(bars[i], ScaleTransform.ScaleYProperty, bars[i].ScaleY, target, 105);
         }
     }
