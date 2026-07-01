@@ -10,4 +10,5 @@ public sealed record SpotifyNowPlaying(
     string Artist,
     byte[]? AlbumArtBytes,
     int ProgressMs,
-    int DurationMs);
+    int DurationMs,
+    bool IsPlaying);

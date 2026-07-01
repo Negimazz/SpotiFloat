@@ -13,8 +13,7 @@ public sealed class SpotifyPlaybackService
 {
     public async Task<SpotifyNowPlaying?> GetNowPlayingAsync()
     {
-        var manager = await GlobalSystemMediaTransportControlsSessionManager.RequestAsync();
-        var session = manager.GetSessions().FirstOrDefault(IsSpotifySession);
+        var session = await GetSpotifySessionAsync();
         if (session is null)
         {
             return null;
@@ -23,7 +22,8 @@ public sealed class SpotifyPlaybackService
         var media = await session.TryGetMediaPropertiesAsync();
         var timeline = session.GetTimelineProperties();
         var playback = session.GetPlaybackInfo();
-        if (playback.PlaybackStatus != GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing)
+        var isPlaying = playback.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing;
+        if (!isPlaying && playback.PlaybackStatus != GlobalSystemMediaTransportControlsSessionPlaybackStatus.Paused)
         {
             return null;
         }
@@ -34,7 +34,49 @@ public sealed class SpotifyPlaybackService
         var progressMs = (int)Math.Max(timeline.Position.TotalMilliseconds, 0);
         var durationMs = (int)Math.Max(timeline.EndTime.TotalMilliseconds, 1);
 
-        return new SpotifyNowPlaying(title, artist, albumArtBytes, progressMs, durationMs);
+        return new SpotifyNowPlaying(title, artist, albumArtBytes, progressMs, durationMs, isPlaying);
+    }
+
+    public async Task TogglePlayPauseAsync()
+    {
+        var session = await GetSpotifySessionAsync();
+        if (session is not null)
+        {
+            await session.TryTogglePlayPauseAsync();
+        }
+    }
+
+    public async Task SkipNextAsync()
+    {
+        var session = await GetSpotifySessionAsync();
+        if (session is not null)
+        {
+            await session.TrySkipNextAsync();
+        }
+    }
+
+    public async Task SkipPreviousAsync()
+    {
+        var session = await GetSpotifySessionAsync();
+        if (session is not null)
+        {
+            await session.TrySkipPreviousAsync();
+        }
+    }
+
+    public async Task SeekAsync(int positionMs)
+    {
+        var session = await GetSpotifySessionAsync();
+        if (session is not null)
+        {
+            await session.TryChangePlaybackPositionAsync(TimeSpan.FromMilliseconds(positionMs).Ticks);
+        }
+    }
+
+    private static async Task<GlobalSystemMediaTransportControlsSession?> GetSpotifySessionAsync()
+    {
+        var manager = await GlobalSystemMediaTransportControlsSessionManager.RequestAsync();
+        return manager.GetSessions().FirstOrDefault(IsSpotifySession);
     }
 
     private static bool IsSpotifySession(GlobalSystemMediaTransportControlsSession session)
