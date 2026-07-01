@@ -2,12 +2,12 @@
 File: SpotiFloat.csproj
 What it does: Defines the WPF project used to build SpotiFloat.
 Why it exists: Provides the .NET project settings for the Windows overlay app.
-RELATED FILES: App.xaml, MainWindow.xaml, Services/SpotifyAuthService.cs
+RELATED FILES: App.xaml, MainWindow.xaml, Services/SpotifyPlaybackService.cs
 -->
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net7.0-windows</TargetFramework>
+    <TargetFramework>net7.0-windows10.0.19041.0</TargetFramework>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <Nullable>enable</Nullable>

@@ -8,6 +8,6 @@ namespace SpotiFloat.Models;
 public sealed record SpotifyNowPlaying(
     string Title,
     string Artist,
-    string? AlbumArtUrl,
+    byte[]? AlbumArtBytes,
     int ProgressMs,
     int DurationMs);

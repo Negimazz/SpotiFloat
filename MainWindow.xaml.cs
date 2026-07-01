@@ -1,9 +1,10 @@
 // File: MainWindow.xaml.cs
 // What it does: Connects the overlay UI to Spotify playback data.
 // Why it exists: Keeps window behavior, tray actions, refresh timing, and display updates together.
-// RELATED FILES: MainWindow.xaml, SettingsWindow.xaml, Services/SpotifyAuthService.cs, Services/SpotifyPlaybackService.cs
+// RELATED FILES: MainWindow.xaml, Services/SpotifyPlaybackService.cs, Models/SpotifyNowPlaying.cs
 
 using System.ComponentModel;
+using System.IO;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -18,9 +19,7 @@ namespace SpotiFloat;
 
 public partial class MainWindow : Window
 {
-    private readonly AppSettingsService settingsService = new();
-    private readonly SpotifyAuthService authService;
-    private readonly SpotifyPlaybackService playbackService;
+    private readonly SpotifyPlaybackService playbackService = new();
     private readonly DispatcherTimer refreshTimer = new();
     private readonly Forms.NotifyIcon trayIcon = new();
     private bool isExitRequested;
@@ -30,8 +29,6 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
-        authService = new SpotifyAuthService(settingsService);
-        playbackService = new SpotifyPlaybackService(authService);
         refreshTimer.Interval = TimeSpan.FromSeconds(2);
         refreshTimer.Tick += async (_, _) => await RefreshPlaybackAsync();
 
@@ -40,13 +37,6 @@ public partial class MainWindow : Window
 
     private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
-        if (!authService.IsConfigured)
-        {
-            SetMessage("Spotify setup needed", "Right-click tray icon");
-            return;
-        }
-
-        await authService.LoadSavedTokenAsync();
         refreshTimer.Start();
         await RefreshPlaybackAsync();
     }
@@ -72,8 +62,6 @@ public partial class MainWindow : Window
     private void ConfigureTrayIcon()
     {
         var menu = new Forms.ContextMenuStrip();
-        menu.Items.Add("Set Spotify Client ID", null, (_, _) => OpenSettings());
-        menu.Items.Add("Connect / Reconnect Spotify", null, async (_, _) => await ConnectSpotifyAsync());
         menu.Items.Add("Show / Hide Overlay", null, (_, _) => ToggleOverlay());
         menu.Items.Add("Refresh Now", null, async (_, _) => await RefreshPlaybackAsync());
         menu.Items.Add(new Forms.ToolStripSeparator());
@@ -84,48 +72,6 @@ public partial class MainWindow : Window
         trayIcon.ContextMenuStrip = menu;
         trayIcon.Visible = true;
         trayIcon.DoubleClick += (_, _) => ToggleOverlay();
-    }
-
-    private void OpenSettings()
-    {
-        var window = new SettingsWindow(settingsService)
-        {
-            Owner = IsVisible ? this : null
-        };
-
-        if (window.ShowDialog() == true)
-        {
-            _ = ResetConnectionAfterSettingsChangeAsync();
-        }
-    }
-
-    private async Task ResetConnectionAfterSettingsChangeAsync()
-    {
-        await authService.ClearSavedTokenAsync();
-        SetMessage("Spotify Client ID saved", "Reconnect from tray menu");
-    }
-
-    private async Task ConnectSpotifyAsync()
-    {
-        if (!authService.IsConfigured)
-        {
-            OpenSettings();
-            return;
-        }
-
-        SetMessage("Connecting Spotify", "Approve access in your browser");
-
-        try
-        {
-            await authService.ClearSavedTokenAsync();
-            await authService.SignInAsync();
-            refreshTimer.Start();
-            await RefreshPlaybackAsync();
-        }
-        catch (Exception ex)
-        {
-            SetMessage("Spotify connection failed", ex.Message);
-        }
     }
 
     private void ToggleOverlay()
@@ -148,12 +94,6 @@ public partial class MainWindow : Window
 
     private async Task RefreshPlaybackAsync()
     {
-        if (!authService.HasToken)
-        {
-            SetMessage("SpotiFloat", "Right-click tray icon to connect");
-            return;
-        }
-
         try
         {
             currentTrack = await playbackService.GetNowPlayingAsync();
@@ -166,7 +106,7 @@ public partial class MainWindow : Window
 
             TitleText.Text = currentTrack.Title;
             ArtistText.Text = currentTrack.Artist;
-            SetAlbumArt(currentTrack.AlbumArtUrl);
+            SetAlbumArt(currentTrack.AlbumArtBytes);
             SetProgress(currentTrack.ProgressMs, currentTrack.DurationMs);
         }
         catch (Exception ex)
@@ -185,9 +125,9 @@ public partial class MainWindow : Window
         SetProgress(0, 1);
     }
 
-    private void SetAlbumArt(string? url)
+    private void SetAlbumArt(byte[]? bytes)
     {
-        if (string.IsNullOrWhiteSpace(url))
+        if (bytes is null || bytes.Length == 0)
         {
             AlbumArtBox.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(35, 35, 40));
             AlbumPlaceholder.Visibility = Visibility.Visible;
@@ -195,7 +135,15 @@ public partial class MainWindow : Window
         }
 
         AlbumPlaceholder.Visibility = Visibility.Collapsed;
-        AlbumArtBox.Background = new ImageBrush(new BitmapImage(new Uri(url)))
+        var image = new BitmapImage();
+        using var stream = new MemoryStream(bytes);
+        image.BeginInit();
+        image.CacheOption = BitmapCacheOption.OnLoad;
+        image.StreamSource = stream;
+        image.EndInit();
+        image.Freeze();
+
+        AlbumArtBox.Background = new ImageBrush(image)
         {
             Stretch = Stretch.UniformToFill
         };

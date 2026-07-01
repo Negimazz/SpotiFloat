@@ -1,109 +1,59 @@
 // File: Services/SpotifyPlaybackService.cs
-// What it does: Reads the currently playing Spotify track from the Spotify Web API.
-// Why it exists: Keeps Spotify API parsing out of the overlay window.
-// RELATED FILES: Services/SpotifyAuthService.cs, Models/SpotifyNowPlaying.cs, MainWindow.xaml.cs
+// What it does: Reads the currently playing Spotify desktop session from Windows.
+// Why it exists: Keeps local media session parsing out of the overlay window.
+// RELATED FILES: Models/SpotifyNowPlaying.cs, MainWindow.xaml.cs
 
-using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text.Json;
 using SpotiFloat.Models;
+using Windows.Media.Control;
+using Windows.Storage.Streams;
 
 namespace SpotiFloat.Services;
 
 public sealed class SpotifyPlaybackService
 {
-    private readonly HttpClient httpClient = new();
-    private readonly SpotifyAuthService authService;
-
-    public SpotifyPlaybackService(SpotifyAuthService authService)
-    {
-        this.authService = authService;
-    }
-
     public async Task<SpotifyNowPlaying?> GetNowPlayingAsync()
     {
-        var accessToken = await authService.GetAccessTokenAsync();
-        return await GetFromEndpointAsync(
-            "https://api.spotify.com/v1/me/player/currently-playing?market=from_token",
-            accessToken)
-            ?? await GetFromEndpointAsync(
-                "https://api.spotify.com/v1/me/player?market=from_token",
-                accessToken);
-    }
-
-    private async Task<SpotifyNowPlaying?> GetFromEndpointAsync(string url, string accessToken)
-    {
-        using var request = new HttpRequestMessage(HttpMethod.Get, url);
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-
-        using var response = await httpClient.SendAsync(request);
-        if (response.StatusCode == HttpStatusCode.Unauthorized)
-        {
-            throw new InvalidOperationException("Spotify authorization expired. Reconnect from the tray menu.");
-        }
-
-        if (response.StatusCode == HttpStatusCode.NoContent || response.StatusCode == HttpStatusCode.NotFound)
+        var manager = await GlobalSystemMediaTransportControlsSessionManager.RequestAsync();
+        var session = manager.GetSessions().FirstOrDefault(IsSpotifySession);
+        if (session is null)
         {
             return null;
         }
 
-        response.EnsureSuccessStatusCode();
-
-        await using var stream = await response.Content.ReadAsStreamAsync();
-        using var document = await JsonDocument.ParseAsync(stream);
-        var root = document.RootElement;
-
-        if (!root.TryGetProperty("item", out var item) || item.ValueKind == JsonValueKind.Null)
+        var media = await session.TryGetMediaPropertiesAsync();
+        var timeline = session.GetTimelineProperties();
+        var playback = session.GetPlaybackInfo();
+        if (playback.PlaybackStatus != GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing)
         {
             return null;
         }
 
-        var title = item.GetProperty("name").GetString() ?? "Unknown track";
-        var artists = GetArtists(item);
-        var imageUrl = GetAlbumImage(item);
-        var progressMs = root.TryGetProperty("progress_ms", out var progress)
-            ? progress.GetInt32()
-            : 0;
-        var durationMs = item.TryGetProperty("duration_ms", out var duration)
-            ? duration.GetInt32()
-            : 1;
+        var title = string.IsNullOrWhiteSpace(media.Title) ? "Unknown track" : media.Title;
+        var artist = string.IsNullOrWhiteSpace(media.Artist) ? "Spotify" : media.Artist;
+        var albumArtBytes = await ReadThumbnailAsync(media.Thumbnail);
+        var progressMs = (int)Math.Max(timeline.Position.TotalMilliseconds, 0);
+        var durationMs = (int)Math.Max(timeline.EndTime.TotalMilliseconds, 1);
 
-        return new SpotifyNowPlaying(title, artists, imageUrl, progressMs, durationMs);
+        return new SpotifyNowPlaying(title, artist, albumArtBytes, progressMs, durationMs);
     }
 
-    private static string GetArtists(JsonElement item)
+    private static bool IsSpotifySession(GlobalSystemMediaTransportControlsSession session)
     {
-        if (!item.TryGetProperty("artists", out var artists) || artists.ValueKind != JsonValueKind.Array)
-        {
-            return "Spotify";
-        }
-
-        var names = artists
-            .EnumerateArray()
-            .Select(GetArtistName)
-            .Where(name => !string.IsNullOrWhiteSpace(name))
-            .ToArray();
-
-        return names.Length > 0 ? string.Join(", ", names) : "Spotify";
+        return session.SourceAppUserModelId.Contains("Spotify", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static string? GetArtistName(JsonElement artist)
+    private static async Task<byte[]?> ReadThumbnailAsync(IRandomAccessStreamReference? thumbnail)
     {
-        return artist.TryGetProperty("name", out var name) ? name.GetString() : null;
-    }
-
-    private static string? GetAlbumImage(JsonElement item)
-    {
-        if (!item.TryGetProperty("album", out var album)
-            || !album.TryGetProperty("images", out var images)
-            || images.ValueKind != JsonValueKind.Array)
+        if (thumbnail is null)
         {
             return null;
         }
 
-        return images.EnumerateArray()
-            .Select(image => image.GetProperty("url").GetString())
-            .FirstOrDefault(url => !string.IsNullOrWhiteSpace(url));
+        using var stream = await thumbnail.OpenReadAsync();
+        var bytes = new byte[stream.Size];
+        using var reader = new DataReader(stream);
+        await reader.LoadAsync((uint)stream.Size);
+        reader.ReadBytes(bytes);
+        return bytes;
     }
 }

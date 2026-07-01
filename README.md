@@ -1,42 +1,31 @@
 <!--
 File: README.md
 What it does: Explains how to run and configure SpotiFloat.
-Why it exists: Gives the setup steps needed for the Spotify overlay app.
-RELATED FILES: SpotiFloat.csproj, Services/SpotifyAuthService.cs, Services/SpotifyPlaybackService.cs
+Why it exists: Gives the usage steps for the Spotify overlay app.
+RELATED FILES: SpotiFloat.csproj, MainWindow.xaml, Services/SpotifyPlaybackService.cs
 -->
 
 # SpotiFloat
 
-Spotifyで再生中の曲だけを表示する、小さなWindows用オーバーレイアプリです。
+Spotifyデスクトップアプリで再生中の曲だけを表示する、小さなWindows用オーバーレイアプリです。
 
 ## できること
 
 - 画面の最前面に小さく表示します。
-- Spotify Web APIから現在再生中の曲を取得します。
-- YouTubeなどSpotify以外の再生は対象外です。
+- Windowsのメディアセッションから現在再生中の曲を取得します。
+- Spotifyのセッションだけを対象にします。
 - ウィンドウはドラッグで移動できます。
+- タスクトレイの右クリックメニューから表示切替と終了ができます。
 
-## 必要な設定
+## 必要なもの
 
-1. Spotify Developer Dashboardでアプリを作成します。
-2. Redirect URIに次を追加します。
+- Spotifyデスクトップアプリ
+- Spotifyで再生中の曲
 
-```text
-http://127.0.0.1:54321/callback/
-```
-
-3. 環境変数にClient IDを設定します。
-
-```powershell
-[Environment]::SetEnvironmentVariable("SPOTIFLOAT_SPOTIFY_CLIENT_ID", "your_client_id", "User")
-```
-
-新しいターミナルやIDEを開き直すと反映されます。
+Spotify Developer Dashboard、Client ID、ログイン連携は不要です。
 
 ## 起動
 
 ```powershell
 dotnet run
 ```
-
-初回起動時は `Connect Spotify` を押してSpotifyにログインしてください。
