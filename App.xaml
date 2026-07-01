@@ -1,0 +1,12 @@
+<!--
+File: App.xaml
+What it does: Declares the WPF application entry point.
+Why it exists: Starts the main overlay window when the app launches.
+RELATED FILES: App.xaml.cs, MainWindow.xaml, SpotiFloat.csproj
+-->
+<Application x:Class="SpotiFloat.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources />
+</Application>

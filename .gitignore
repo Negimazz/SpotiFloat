@@ -1,0 +1,11 @@
+# File: .gitignore
+# What it does: Keeps local build output and secrets out of Git.
+# Why it exists: Prevents generated files and local credentials from being committed.
+# RELATED FILES: SpotiFloat.csproj, README.md
+
+bin/
+obj/
+publish/
+.vs/
+*.user
+spotify-client-id.txt
