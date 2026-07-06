@@ -166,12 +166,12 @@ RELATED FILES: MainWindow.xaml.cs, Services/SpotifyPlaybackService.cs, Models/Sp
         </Grid>
 
         <Border x:Name="MenuPanel"
-                Width="720"
-                Height="560"
+                Width="640"
+                Height="408"
                 Opacity="0"
                 Visibility="Collapsed"
                 Margin="8"
-                Padding="20"
+                Padding="14"
                 Background="{StaticResource MenuGlassBrush}"
                 BorderBrush="#B4CDECF3"
                 BorderThickness="1"
@@ -196,66 +196,66 @@ RELATED FILES: MainWindow.xaml.cs, Services/SpotifyPlaybackService.cs, Models/Sp
                     </LinearGradientBrush>
                 </Grid.OpacityMask>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="258" />
+                    <RowDefinition Height="214" />
                     <RowDefinition Height="1" />
-                    <RowDefinition Height="205" />
+                    <RowDefinition Height="165" />
                 </Grid.RowDefinitions>
 
                 <Grid Grid.Row="0">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="252" />
+                        <ColumnDefinition Width="214" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
-                    <Border Width="225"
-                            Height="225"
+                    <Border Width="190"
+                            Height="190"
                             HorizontalAlignment="Left"
                             VerticalAlignment="Top"
                             Background="#3820272C"
-                            CornerRadius="112">
+                            CornerRadius="95">
                         <Border.Effect>
                             <DropShadowEffect BlurRadius="36" ShadowDepth="0" Color="#FFB4F2FF" Opacity="0.76" />
                         </Border.Effect>
                     </Border>
 
                     <Border x:Name="MenuAlbumArtBox"
-                            Width="212"
-                            Height="212"
-                            Margin="6"
+                            Width="180"
+                            Height="180"
+                            Margin="5"
                             HorizontalAlignment="Left"
                             VerticalAlignment="Top"
                             Background="#FF20252A"
-                            CornerRadius="106" />
+                            CornerRadius="90" />
 
-                    <Border Width="38"
-                            Height="38"
-                            Margin="92,92,0,0"
+                    <Border Width="32"
+                            Height="32"
+                            Margin="79,79,0,0"
                             HorizontalAlignment="Left"
                             VerticalAlignment="Top"
                             Background="#E80B1115"
-                            CornerRadius="19" />
+                            CornerRadius="16" />
 
-                    <StackPanel Grid.Column="1" Margin="12,14,0,0">
+                    <StackPanel Grid.Column="1" Margin="9,8,0,0">
                         <TextBlock x:Name="MenuTitleText"
                                    Foreground="#EAF5F8"
                                    FontFamily="Consolas"
-                                   FontSize="22"
+                                   FontSize="19"
                                    FontWeight="Bold"
                                    Text="SpotiFloat"
                                    TextTrimming="CharacterEllipsis" />
                         <TextBlock x:Name="MenuArtistText"
-                                   Margin="0,9,0,0"
+                                   Margin="0,6,0,0"
                                    Foreground="#D5E0E4"
                                    FontFamily="Consolas"
-                                   FontSize="13"
+                                   FontSize="12"
                                    Text="BY Spotify" />
-                        <TextBlock Margin="0,13,0,0"
+                        <TextBlock Margin="0,9,0,0"
                                    Foreground="#EAF7FA"
                                    FontFamily="Consolas"
-                                   FontSize="12"
+                                   FontSize="11"
                                    Text="* Spotify Desktop   VIA Windows Media Session" />
 
-                        <Grid Margin="0,22,4,0">
+                        <Grid Margin="0,16,4,0">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
@@ -269,58 +269,58 @@ RELATED FILES: MainWindow.xaml.cs, Services/SpotifyPlaybackService.cs, Models/Sp
                                     Style="{StaticResource SeekSliderStyle}"
                                     PreviewMouseLeftButtonDown="MenuSeekSlider_PreviewMouseLeftButtonDown"
                                     PreviewMouseLeftButtonUp="MenuSeekSlider_PreviewMouseLeftButtonUp" />
-                            <Grid Grid.Row="1" Margin="0,8,0,0">
+                            <Grid Grid.Row="1" Margin="0,6,0,0">
                                 <TextBlock x:Name="CurrentTimeText"
                                            Foreground="#E6EEF2"
                                            FontFamily="Consolas"
-                                           FontSize="13"
+                                           FontSize="12"
                                            Text="00:00" />
                                 <TextBlock x:Name="DurationText"
                                            HorizontalAlignment="Right"
                                            Foreground="#E6EEF2"
                                            FontFamily="Consolas"
-                                           FontSize="13"
+                                           FontSize="12"
                                            Text="00:00" />
                             </Grid>
                         </Grid>
 
-                        <StackPanel Margin="0,25,0,0"
+                        <StackPanel Margin="0,17,0,0"
                                     HorizontalAlignment="Center"
                                     Orientation="Horizontal">
-                            <Button Width="58"
-                                    Height="48"
+                            <Button Width="50"
+                                    Height="42"
                                     Click="PreviousButton_Click"
                                     Style="{StaticResource IconButtonStyle}">
-                                <Viewbox Width="28" Height="28">
+                                <Viewbox Width="25" Height="25">
                                     <Canvas Width="32" Height="32">
                                         <Path Fill="#E8F7FF" Data="M8,6 L11,6 L11,26 L8,26 Z M24,6 L13,16 L24,26 Z" />
                                     </Canvas>
                                 </Viewbox>
                             </Button>
                             <Button x:Name="PlayPauseButton"
-                                    Width="74"
-                                    Height="56"
-                                    Margin="27,0"
+                                    Width="62"
+                                    Height="48"
+                                    Margin="20,0"
                                     Click="PlayPauseButton_Click"
                                     Style="{StaticResource IconButtonStyle}">
                                 <Grid>
-                                    <Viewbox x:Name="PauseIcon" Width="36" Height="36">
+                                    <Viewbox x:Name="PauseIcon" Width="31" Height="31">
                                         <Canvas Width="32" Height="32">
                                             <Path Fill="#9FE8FF" Data="M8,5 L14,5 L14,27 L8,27 Z M18,5 L24,5 L24,27 L18,27 Z" />
                                         </Canvas>
                                     </Viewbox>
-                                    <Viewbox x:Name="PlayIcon" Width="36" Height="36" Visibility="Collapsed">
+                                    <Viewbox x:Name="PlayIcon" Width="31" Height="31" Visibility="Collapsed">
                                         <Canvas Width="32" Height="32">
                                             <Path Fill="#9FE8FF" Data="M9,5 L26,16 L9,27 Z" />
                                         </Canvas>
                                     </Viewbox>
                                 </Grid>
                             </Button>
-                            <Button Width="58"
-                                    Height="48"
+                            <Button Width="50"
+                                    Height="42"
                                     Click="NextButton_Click"
                                     Style="{StaticResource IconButtonStyle}">
-                                <Viewbox Width="28" Height="28">
+                                <Viewbox Width="25" Height="25">
                                     <Canvas Width="32" Height="32">
                                         <Path Fill="#E8F7FF" Data="M21,6 L24,6 L24,26 L21,26 Z M8,6 L19,16 L8,26 Z" />
                                     </Canvas>
@@ -332,20 +332,20 @@ RELATED FILES: MainWindow.xaml.cs, Services/SpotifyPlaybackService.cs, Models/Sp
 
                 <Border Grid.Row="1" Background="#4FD3F6FF" />
 
-                <Grid Grid.Row="2" Margin="0,19,0,0">
+                <Grid Grid.Row="2" Margin="0,8,0,0">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
-                        <RowDefinition Height="124" />
+                        <RowDefinition Height="118" />
                     </Grid.RowDefinitions>
 
                     <Grid>
                         <TextBlock Foreground="#BDEFFF"
                                    FontFamily="Consolas"
-                                   FontSize="18"
+                                   FontSize="16"
                                    FontWeight="SemiBold"
                                    Text="Visualizer" />
                         <Border HorizontalAlignment="Right"
-                                Padding="16,8"
+                                Padding="13,6"
                                 Background="#CC141920"
                                 CornerRadius="8">
                             <TextBlock Foreground="#E6F4F8"
@@ -355,8 +355,8 @@ RELATED FILES: MainWindow.xaml.cs, Services/SpotifyPlaybackService.cs, Models/Sp
                     </Grid>
 
                     <Border Grid.Row="1"
-                            Margin="0,14,0,0"
-                            Padding="16,10"
+                            Margin="0,8,0,0"
+                            Padding="12,8"
                             Background="#8A151C22"
                             BorderBrush="#306FDDF3"
                             BorderThickness="1"
@@ -368,28 +368,28 @@ RELATED FILES: MainWindow.xaml.cs, Services/SpotifyPlaybackService.cs, Models/Sp
 
                     <Grid x:Name="VisualizerGrid"
                           Grid.Row="1"
-                          Margin="16,21,16,0">
+                          Margin="14,17,14,0">
                         <UniformGrid Columns="20" VerticalAlignment="Bottom">
-                            <Border Height="92" Margin="5,0" Background="#A5BDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz01" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="92" Margin="5,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz02" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="92" Margin="5,0" Background="#D0BDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz03" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="92" Margin="5,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz04" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="92" Margin="5,0" Background="#E29FE8FF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz05" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="92" Margin="5,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz06" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="92" Margin="5,0" Background="#D8BDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz07" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="92" Margin="5,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz08" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="92" Margin="5,0" Background="#E29FE8FF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz09" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="92" Margin="5,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz10" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="92" Margin="5,0" Background="#C8BDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz11" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="92" Margin="5,0" Background="#D89FE8FF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz12" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="92" Margin="5,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz13" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="92" Margin="5,0" Background="#D0BDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz14" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="92" Margin="5,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz15" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="92" Margin="5,0" Background="#E29FE8FF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz16" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="92" Margin="5,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz17" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="92" Margin="5,0" Background="#D0BDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz18" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="92" Margin="5,0" Background="#A5BDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz19" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="92" Margin="5,0" Background="#D89FE8FF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz20" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="72" Margin="4,0" Background="#A5BDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz01" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="72" Margin="4,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz02" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="72" Margin="4,0" Background="#D0BDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz03" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="72" Margin="4,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz04" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="72" Margin="4,0" Background="#E29FE8FF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz05" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="72" Margin="4,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz06" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="72" Margin="4,0" Background="#D8BDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz07" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="72" Margin="4,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz08" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="72" Margin="4,0" Background="#E29FE8FF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz09" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="72" Margin="4,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz10" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="72" Margin="4,0" Background="#C8BDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz11" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="72" Margin="4,0" Background="#D89FE8FF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz12" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="72" Margin="4,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz13" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="72" Margin="4,0" Background="#D0BDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz14" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="72" Margin="4,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz15" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="72" Margin="4,0" Background="#E29FE8FF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz16" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="72" Margin="4,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz17" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="72" Margin="4,0" Background="#D0BDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz18" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="72" Margin="4,0" Background="#A5BDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz19" ScaleY="0.18" /></Border.RenderTransform></Border>
+                            <Border Height="72" Margin="4,0" Background="#D89FE8FF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz20" ScaleY="0.18" /></Border.RenderTransform></Border>
                         </UniformGrid>
                     </Grid>
                 </Grid>

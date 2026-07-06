@@ -29,8 +29,8 @@ public partial class MainWindow : Window
     private const int WmHotkey = 0x0312;
     private const double CompactWidth = 342;
     private const double CompactHeight = 92;
-    private const double MenuWidth = 736;
-    private const double MenuHeight = 512;
+    private const double MenuWidth = 656;
+    private const double MenuHeight = 424;
 
     private readonly SpotifyPlaybackService playbackService = new();
     private readonly DispatcherTimer refreshTimer = new();
@@ -283,10 +283,10 @@ public partial class MainWindow : Window
         MenuAlbumArtBox.Background = menuBrush;
     }
 
-    private void SetProgressSource(int progressMs, int durationMs, bool isSameTrack)
+    private void SetProgressSource(int progressMs, int durationMs, bool isSameTrack, bool acceptRollback = false)
     {
         var visibleProgressMs = GetVisibleProgressMs();
-        lastProgressMs = isSameTrack
+        lastProgressMs = isSameTrack && !acceptRollback
             ? Math.Max(progressMs, visibleProgressMs)
             : progressMs;
         lastDurationMs = Math.Max(durationMs, 1);
@@ -355,8 +355,9 @@ public partial class MainWindow : Window
         isSeeking = false;
         var positionMs = (int)Math.Clamp(MenuSeekSlider.Value, 0, lastDurationMs);
         await playbackService.SeekAsync(positionMs);
-        SetProgressSource(positionMs, lastDurationMs, true);
+        SetProgressSource(positionMs, lastDurationMs, true, true);
         UpdateSmoothProgress();
+        await RefreshAfterCommandAsync();
     }
 
     private void UpdateVisualizer()
@@ -368,9 +369,9 @@ public partial class MainWindow : Window
         {
             var level = i < levels.Length ? levels[i] : 0;
             var target = isPlaybackMoving
-                ? isSilent ? 0.18 : 0.18 + level * 1.22
+                ? isSilent ? 0.18 : 0.16 + level * 1.04
                 : 0.12;
-            target = Math.Clamp(target, 0.12, 1.18);
+            target = Math.Clamp(target, 0.12, 1.0);
             Animate(bars[i], ScaleTransform.ScaleYProperty, bars[i].ScaleY, target, 105);
         }
     }

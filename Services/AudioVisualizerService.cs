@@ -57,18 +57,22 @@ public sealed class AudioVisualizerService : IDisposable
         var total = 0.0;
         for (var band = 0; band < count; band++)
         {
-            var start = 1 + band * usableBins / count;
-            var end = 1 + (band + 1) * usableBins / count;
+            var start = GetLogBin(band, count, usableBins);
+            var end = Math.Max(start + 1, GetLogBin(band + 1, count, usableBins));
+            var sum = 0.0;
             var peak = 0.0;
 
             for (var i = start; i < end; i++)
             {
                 var magnitude = Math.Sqrt(fft[i].X * fft[i].X + fft[i].Y * fft[i].Y);
+                sum += magnitude;
                 peak = Math.Max(peak, magnitude);
             }
 
-            total += peak;
-            bands[band] = Math.Clamp(Math.Pow(Math.Log10(1 + peak * 260), 0.72), 0, 1);
+            var average = sum / Math.Max(end - start, 1);
+            var level = peak * 0.65 + average * 0.35;
+            total += level;
+            bands[band] = Math.Clamp(Math.Pow(Math.Log10(1 + level * 520), 0.62), 0, 1);
         }
 
         if (total < 0.006)
@@ -77,6 +81,14 @@ public sealed class AudioVisualizerService : IDisposable
         }
 
         return bands;
+    }
+
+    private static int GetLogBin(int band, int count, int usableBins)
+    {
+        var min = Math.Log(2);
+        var max = Math.Log(usableBins);
+        var value = Math.Exp(min + (max - min) * band / count);
+        return Math.Clamp((int)Math.Round(value), 1, usableBins - 1);
     }
 
     public void Dispose()
