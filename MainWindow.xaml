@@ -97,7 +97,7 @@ RELATED FILES: MainWindow.xaml.cs, Services/SpotifyPlaybackService.cs, Models/Sp
                                     <Thumb Width="15" Height="15">
                                         <Thumb.Template>
                                             <ControlTemplate TargetType="Thumb">
-                                                <Ellipse Fill="#FFF8FAFF" BorderBrush="#80FFFFFF" BorderThickness="1">
+                                                <Ellipse Fill="#FFF8FAFF" Stroke="#80FFFFFF" StrokeThickness="1">
                                                     <Ellipse.Effect>
                                                         <DropShadowEffect BlurRadius="10" ShadowDepth="0" Color="#FF9CEAFF" Opacity="0.7" />
                                                     </Ellipse.Effect>
