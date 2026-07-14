@@ -29,15 +29,13 @@ public partial class MainWindow : Window
     private const int WmHotkey = 0x0312;
     private const double CompactWidth = 342;
     private const double CompactHeight = 92;
-    private const double MenuWidth = 656;
-    private const double MenuHeight = 424;
+    private const double MenuWidth = 516;
+    private const double MenuHeight = 286;
 
     private readonly SpotifyPlaybackService playbackService = new();
     private readonly DispatcherTimer refreshTimer = new();
     private readonly DispatcherTimer progressTimer = new();
-    private readonly DispatcherTimer visualizerTimer = new();
     private readonly Forms.NotifyIcon trayIcon = new();
-    private readonly AudioVisualizerService audioVisualizerService = new();
 
     private DateTime progressUpdatedAtUtc;
     private int lastProgressMs;
@@ -47,6 +45,7 @@ public partial class MainWindow : Window
     private bool isPlaybackMoving;
     private bool isSeeking;
     private bool isExitRequested;
+    private bool isAlbumRotating;
     private SpotifyNowPlaying? currentTrack;
 
     public MainWindow()
@@ -57,8 +56,6 @@ public partial class MainWindow : Window
         refreshTimer.Tick += async (_, _) => await RefreshPlaybackAsync();
         progressTimer.Interval = TimeSpan.FromMilliseconds(100);
         progressTimer.Tick += (_, _) => UpdateSmoothProgress();
-        visualizerTimer.Interval = TimeSpan.FromMilliseconds(115);
-        visualizerTimer.Tick += (_, _) => UpdateVisualizer();
 
         ConfigureTrayIcon();
     }
@@ -76,8 +73,6 @@ public partial class MainWindow : Window
     {
         refreshTimer.Start();
         progressTimer.Start();
-        visualizerTimer.Start();
-        audioVisualizerService.Start();
         await RefreshPlaybackAsync();
     }
 
@@ -92,7 +87,6 @@ public partial class MainWindow : Window
 
         trayIcon.Visible = false;
         trayIcon.Dispose();
-        audioVisualizerService.Dispose();
         UnregisterHotKey(new WindowInteropHelper(this).Handle, HotkeyId);
     }
 
@@ -166,22 +160,35 @@ public partial class MainWindow : Window
         MenuPanel.Visibility = Visibility.Visible;
         CompactOverlay.Visibility = Visibility.Collapsed;
 
-        Animate(MenuPanel, OpacityProperty, 0, 1, 180);
-        Animate(MenuScale, ScaleTransform.ScaleXProperty, 0.88, 1, 220);
-        Animate(MenuScale, ScaleTransform.ScaleYProperty, 0.88, 1, 220);
-        Animate(MenuTranslate, TranslateTransform.XProperty, -18, 0, 220);
-        Animate(MenuTranslate, TranslateTransform.YProperty, -14, 0, 220);
-        Animate(VisualizerGrid, OpacityProperty, 0.35, 1, 300);
+        MenuControls.Opacity = 0;
+        StartRingRotation();
+        UpdateAlbumRotation();
+
+        var smooth = new QuarticEase { EasingMode = EasingMode.EaseOut };
+        var pop = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.35 };
+        Animate(MenuPanel, OpacityProperty, 0, 1, 320, smooth);
+        Animate(MenuScale, ScaleTransform.ScaleXProperty, 0.92, 1, 440, smooth);
+        Animate(MenuScale, ScaleTransform.ScaleYProperty, 0.92, 1, 440, smooth);
+        Animate(MenuTranslate, TranslateTransform.XProperty, -12, 0, 440, smooth);
+        Animate(MenuTranslate, TranslateTransform.YProperty, 12, 0, 440, smooth);
+        Animate(MenuAlbumScale, ScaleTransform.ScaleXProperty, 0.78, 1, 560, pop, 60);
+        Animate(MenuAlbumScale, ScaleTransform.ScaleYProperty, 0.78, 1, 560, pop, 60);
+        Animate(MenuAlbumTranslate, TranslateTransform.XProperty, -30, 0, 520, smooth, 60);
+        Animate(MenuAlbumTranslate, TranslateTransform.YProperty, 8, 0, 520, smooth, 60);
+        Animate(MenuContentTranslate, TranslateTransform.XProperty, 28, 0, 500, smooth, 130);
+        Animate(MenuProgressTranslate, TranslateTransform.YProperty, 12, 0, 460, pop, 210);
+        Animate(MenuControls, OpacityProperty, 0, 1, 360, smooth, 240);
+        Animate(MenuControlsTranslate, TranslateTransform.YProperty, 15, 0, 480, pop, 240);
     }
 
     private void CloseMenu()
     {
         isMenuOpen = false;
         Animate(MenuPanel, OpacityProperty, MenuPanel.Opacity, 0, 130);
-        Animate(MenuScale, ScaleTransform.ScaleXProperty, MenuScale.ScaleX, 0.9, 130);
-        Animate(MenuScale, ScaleTransform.ScaleYProperty, MenuScale.ScaleY, 0.9, 130);
-        Animate(MenuTranslate, TranslateTransform.XProperty, MenuTranslate.X, -10, 130);
-        Animate(MenuTranslate, TranslateTransform.YProperty, MenuTranslate.Y, -8, 130);
+        Animate(MenuScale, ScaleTransform.ScaleXProperty, MenuScale.ScaleX, 0.94, 150);
+        Animate(MenuScale, ScaleTransform.ScaleYProperty, MenuScale.ScaleY, 0.94, 150);
+        Animate(MenuTranslate, TranslateTransform.XProperty, MenuTranslate.X, -8, 150);
+        Animate(MenuTranslate, TranslateTransform.YProperty, MenuTranslate.Y, 8, 150);
 
         var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(140) };
         timer.Tick += (_, _) =>
@@ -189,6 +196,8 @@ public partial class MainWindow : Window
             timer.Stop();
             MenuPanel.Visibility = Visibility.Collapsed;
             CompactOverlay.Visibility = Visibility.Visible;
+            StopRingRotation();
+            StopAlbumRotation();
             Width = CompactWidth;
             Height = CompactHeight;
         };
@@ -222,6 +231,7 @@ public partial class MainWindow : Window
             PauseIcon.Visibility = currentTrack.IsPlaying ? Visibility.Visible : Visibility.Collapsed;
             PlayIcon.Visibility = currentTrack.IsPlaying ? Visibility.Collapsed : Visibility.Visible;
             isPlaybackMoving = currentTrack.IsPlaying;
+            UpdateAlbumRotation();
             SetAlbumArt(currentTrack.AlbumArtBytes);
             SetProgressSource(currentTrack.ProgressMs, currentTrack.DurationMs, nextTrackKey == previousTrackKey);
             currentTrackKey = nextTrackKey;
@@ -244,8 +254,10 @@ public partial class MainWindow : Window
         MenuArtistText.Text = subtitle;
         PauseIcon.Visibility = Visibility.Collapsed;
         PlayIcon.Visibility = Visibility.Visible;
+        UpdateAlbumRotation();
         AlbumArtBox.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(35, 35, 40));
         MenuAlbumArtBox.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(35, 35, 40));
+        MenuBackdrop.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(35, 35, 40));
         AlbumPlaceholder.Visibility = Visibility.Visible;
         SetProgressSource(0, 1, false);
         UpdateSmoothProgress();
@@ -257,6 +269,7 @@ public partial class MainWindow : Window
         {
             AlbumArtBox.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(35, 35, 40));
             MenuAlbumArtBox.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(35, 35, 40));
+            MenuBackdrop.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(35, 35, 40));
             AlbumPlaceholder.Visibility = Visibility.Visible;
             return;
         }
@@ -278,9 +291,14 @@ public partial class MainWindow : Window
         {
             Stretch = Stretch.UniformToFill
         };
+        var backdropBrush = new ImageBrush(image)
+        {
+            Stretch = Stretch.UniformToFill
+        };
 
         AlbumArtBox.Background = compactBrush;
         MenuAlbumArtBox.Background = menuBrush;
+        MenuBackdrop.Background = backdropBrush;
     }
 
     private void SetProgressSource(int progressMs, int durationMs, bool isSameTrack, bool acceptRollback = false)
@@ -360,29 +378,62 @@ public partial class MainWindow : Window
         await RefreshAfterCommandAsync();
     }
 
-    private void UpdateVisualizer()
+    private void StartRingRotation()
     {
-        var bars = GetVisualizerBars();
-        var levels = audioVisualizerService.GetBands(bars.Length);
-        var isSilent = levels.All(level => level <= 0);
-        for (var i = 0; i < bars.Length; i++)
+        var animation = new DoubleAnimation(0, 360, TimeSpan.FromSeconds(5))
         {
-            var level = i < levels.Length ? levels[i] : 0;
-            var target = isPlaybackMoving
-                ? isSilent ? 0.18 : 0.16 + level * 1.04
-                : 0.12;
-            target = Math.Clamp(target, 0.12, 1.0);
-            Animate(bars[i], ScaleTransform.ScaleYProperty, bars[i].ScaleY, target, 105);
-        }
+            RepeatBehavior = RepeatBehavior.Forever
+        };
+        RingRotate.BeginAnimation(RotateTransform.AngleProperty, animation);
+        PopupBorderRotate.BeginAnimation(RotateTransform.AngleProperty, animation);
     }
 
-    private ScaleTransform[] GetVisualizerBars()
+    private void StopRingRotation()
     {
-        return new[]
+        RingRotate.BeginAnimation(RotateTransform.AngleProperty, null);
+        PopupBorderRotate.BeginAnimation(RotateTransform.AngleProperty, null);
+        RingRotate.Angle = 0;
+        PopupBorderRotate.Angle = 0;
+    }
+
+    private void UpdateAlbumRotation()
+    {
+        if (isMenuOpen && isPlaybackMoving)
         {
-            Viz01, Viz02, Viz03, Viz04, Viz05, Viz06, Viz07, Viz08, Viz09, Viz10,
-            Viz11, Viz12, Viz13, Viz14, Viz15, Viz16, Viz17, Viz18, Viz19, Viz20
+            StartAlbumRotation();
+            return;
+        }
+
+        StopAlbumRotation();
+    }
+
+    private void StartAlbumRotation()
+    {
+        if (isAlbumRotating)
+        {
+            return;
+        }
+
+        isAlbumRotating = true;
+        var startAngle = AlbumRotate.Angle % 360;
+        var animation = new DoubleAnimation(startAngle, startAngle + 360, TimeSpan.FromSeconds(8))
+        {
+            RepeatBehavior = RepeatBehavior.Forever
         };
+        AlbumRotate.BeginAnimation(RotateTransform.AngleProperty, animation);
+    }
+
+    private void StopAlbumRotation()
+    {
+        if (!isAlbumRotating)
+        {
+            return;
+        }
+
+        var angle = AlbumRotate.Angle % 360;
+        AlbumRotate.BeginAnimation(RotateTransform.AngleProperty, null);
+        AlbumRotate.Angle = angle;
+        isAlbumRotating = false;
     }
 
     private static string FormatTime(int milliseconds)
@@ -391,11 +442,19 @@ public partial class MainWindow : Window
         return $"{(int)time.TotalMinutes:00}:{time.Seconds:00}";
     }
 
-    private static void Animate(DependencyObject target, DependencyProperty property, double from, double to, int milliseconds)
+    private static void Animate(
+        DependencyObject target,
+        DependencyProperty property,
+        double from,
+        double to,
+        int milliseconds,
+        IEasingFunction? easingFunction = null,
+        int delayMilliseconds = 0)
     {
         var animation = new DoubleAnimation(from, to, TimeSpan.FromMilliseconds(milliseconds))
         {
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            BeginTime = TimeSpan.FromMilliseconds(delayMilliseconds),
+            EasingFunction = easingFunction ?? new CubicEase { EasingMode = EasingMode.EaseOut }
         };
 
         if (target is UIElement element)

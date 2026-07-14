@@ -1,7 +1,7 @@
 <!--
 File: MainWindow.xaml
 What it does: Defines the compact overlay and expanded player menu UI.
-Why it exists: Shows Spotify playback with a glass-style control menu and visualizer.
+Why it exists: Shows Spotify playback in a small animated glass-style player.
 RELATED FILES: MainWindow.xaml.cs, Services/SpotifyPlaybackService.cs, Models/SpotifyNowPlaying.cs
 -->
 <Window x:Class="SpotiFloat.MainWindow"
@@ -23,36 +23,61 @@ RELATED FILES: MainWindow.xaml.cs, Services/SpotifyPlaybackService.cs, Models/Sp
         MouseRightButtonUp="Window_MouseRightButtonUp">
     <Window.Resources>
         <LinearGradientBrush x:Key="MenuGlassBrush" StartPoint="0,0" EndPoint="1,1">
-            <GradientStop Color="#E0475054" Offset="0" />
-            <GradientStop Color="#D8333B40" Offset="0.48" />
-            <GradientStop Color="#EA151B20" Offset="1" />
+            <GradientStop Color="#F0181A21" Offset="0" />
+            <GradientStop Color="#F520222B" Offset="0.52" />
+            <GradientStop Color="#FA0D0F15" Offset="1" />
         </LinearGradientBrush>
-        <LinearGradientBrush x:Key="CyanFillBrush" StartPoint="0,0" EndPoint="1,0">
-            <GradientStop Color="#FF70D8EF" Offset="0" />
-            <GradientStop Color="#FFC7F3FF" Offset="1" />
+        <LinearGradientBrush x:Key="PopupBorderBrush" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#FFDA8CFF" Offset="0" />
+            <GradientStop Color="#FF72D9FF" Offset="0.45" />
+            <GradientStop Color="#FFFF799C" Offset="1" />
+        </LinearGradientBrush>
+        <LinearGradientBrush x:Key="AccentBrush" StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Color="#FFB28CFF" Offset="0" />
+            <GradientStop Color="#FF77DFFF" Offset="0.52" />
+            <GradientStop Color="#FFFF83A7" Offset="1" />
         </LinearGradientBrush>
         <Style x:Key="IconButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Foreground" Value="#E8F7FF" />
+            <Setter Property="Foreground" Value="#F2F4FF" />
             <Setter Property="Padding" Value="0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="ButtonSurface"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="22">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ButtonSurface" Property="Background" Value="#24FFFFFF" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="ButtonSurface" Property="Background" Value="#3FFFFFFF" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
         <Style x:Key="SeekSliderStyle" TargetType="Slider">
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Slider">
-                        <Grid Height="22">
+                        <Grid Height="20">
                             <Track x:Name="PART_Track" VerticalAlignment="Center">
                                 <Track.DecreaseRepeatButton>
                                     <RepeatButton Command="Slider.DecreaseLarge">
                                         <RepeatButton.Template>
                                             <ControlTemplate TargetType="RepeatButton">
-                                                <Border Height="7"
-                                                        Background="{StaticResource CyanFillBrush}"
-                                                        CornerRadius="4">
+                                                <Border Height="5"
+                                                        Background="{StaticResource AccentBrush}"
+                                                        CornerRadius="3">
                                                     <Border.Effect>
-                                                        <DropShadowEffect BlurRadius="10" ShadowDepth="0" Color="#FF91EAFF" Opacity="0.38" />
+                                                        <DropShadowEffect BlurRadius="8" ShadowDepth="0" Color="#FF8DE7FF" Opacity="0.35" />
                                                     </Border.Effect>
                                                 </Border>
                                             </ControlTemplate>
@@ -63,18 +88,18 @@ RELATED FILES: MainWindow.xaml.cs, Services/SpotifyPlaybackService.cs, Models/Sp
                                     <RepeatButton Command="Slider.IncreaseLarge">
                                         <RepeatButton.Template>
                                             <ControlTemplate TargetType="RepeatButton">
-                                                <Border Height="7" Background="#B010151A" CornerRadius="4" />
+                                                <Border Height="5" Background="#5511141C" CornerRadius="3" />
                                             </ControlTemplate>
                                         </RepeatButton.Template>
                                     </RepeatButton>
                                 </Track.IncreaseRepeatButton>
                                 <Track.Thumb>
-                                    <Thumb Width="20" Height="20">
+                                    <Thumb Width="15" Height="15">
                                         <Thumb.Template>
                                             <ControlTemplate TargetType="Thumb">
-                                                <Ellipse Fill="#EFF8FC">
+                                                <Ellipse Fill="#FFF8FAFF" BorderBrush="#80FFFFFF" BorderThickness="1">
                                                     <Ellipse.Effect>
-                                                        <DropShadowEffect BlurRadius="13" ShadowDepth="0" Color="#FFC9F6FF" Opacity="0.7" />
+                                                        <DropShadowEffect BlurRadius="10" ShadowDepth="0" Color="#FF9CEAFF" Opacity="0.7" />
                                                     </Ellipse.Effect>
                                                 </Ellipse>
                                             </ControlTemplate>
@@ -93,14 +118,13 @@ RELATED FILES: MainWindow.xaml.cs, Services/SpotifyPlaybackService.cs, Models/Sp
         <Grid x:Name="CompactOverlay">
             <Border Margin="34,14,8,10"
                     Padding="72,11,16,9"
-                    Background="#F00E0E10"
-                    BorderBrush="#242428"
+                    Background="#F20D0F14"
+                    BorderBrush="#505D6270"
                     BorderThickness="1"
                     CornerRadius="18">
                 <Border.Effect>
-                    <DropShadowEffect BlurRadius="14" ShadowDepth="3" Opacity="0.35" />
+                    <DropShadowEffect BlurRadius="18" ShadowDepth="2" Color="#CC000000" Opacity="0.5" />
                 </Border.Effect>
-
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -108,31 +132,26 @@ RELATED FILES: MainWindow.xaml.cs, Services/SpotifyPlaybackService.cs, Models/Sp
                         <RowDefinition Height="6" />
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
-
                     <TextBlock x:Name="TitleText"
-                               Grid.Row="0"
-                               Foreground="#FFF7F7F7"
+                               Foreground="#FFF7F7FB"
+                               FontFamily="Segoe UI Variable Display"
                                FontSize="12"
                                FontWeight="SemiBold"
                                Text="SpotiFloat"
                                TextAlignment="Center"
                                TextTrimming="CharacterEllipsis" />
-
                     <TextBlock x:Name="ArtistText"
                                Grid.Row="1"
                                Margin="0,2,0,0"
-                               Foreground="#FFB9B9BE"
+                               Foreground="#FFAAAEBB"
+                               FontFamily="Segoe UI Variable Text"
                                FontSize="10"
                                Text="Play music in Spotify"
                                TextAlignment="Center"
                                TextTrimming="CharacterEllipsis" />
-
-                    <Grid Grid.Row="3"
-                          Width="210"
-                          Height="4"
-                          HorizontalAlignment="Center">
-                        <Border Background="#FF5A5A66" CornerRadius="2" />
-                        <Border Background="#FF20C7D8"
+                    <Grid Grid.Row="3" Width="210" Height="3" HorizontalAlignment="Center">
+                        <Border Background="#FF353944" CornerRadius="2" />
+                        <Border Background="{StaticResource AccentBrush}"
                                 CornerRadius="2"
                                 RenderTransformOrigin="0,0.5">
                             <Border.RenderTransform>
@@ -143,255 +162,255 @@ RELATED FILES: MainWindow.xaml.cs, Services/SpotifyPlaybackService.cs, Models/Sp
                 </Grid>
             </Border>
 
-            <Border x:Name="AlbumArtBox"
-                    Width="74"
-                    Height="74"
-                    Margin="14,7,0,0"
+            <Border Width="78"
+                    Height="78"
+                    Margin="12,5,0,0"
                     HorizontalAlignment="Left"
                     VerticalAlignment="Top"
-                    Background="#FF232328"
-                    CornerRadius="14">
+                    Background="{StaticResource PopupBorderBrush}"
+                    CornerRadius="16">
                 <Border.Effect>
-                    <DropShadowEffect BlurRadius="11" ShadowDepth="2" Opacity="0.35" />
+                    <DropShadowEffect BlurRadius="14" ShadowDepth="2" Color="#FF88DFFF" Opacity="0.3" />
                 </Border.Effect>
-                <Grid>
-                    <TextBlock x:Name="AlbumPlaceholder"
-                               Foreground="#FF8E8E94"
-                               FontSize="10"
-                               Text="Spotify"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center" />
-                </Grid>
+                <Border x:Name="AlbumArtBox"
+                        Margin="2"
+                        Background="#FF23252D"
+                        CornerRadius="14">
+                    <Grid>
+                        <TextBlock x:Name="AlbumPlaceholder"
+                                   Foreground="#FF8E929E"
+                                   FontSize="10"
+                                   Text="Spotify"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" />
+                    </Grid>
+                </Border>
             </Border>
         </Grid>
 
         <Border x:Name="MenuPanel"
-                Width="640"
-                Height="408"
+                Width="500"
+                Height="270"
+                Margin="8"
+                Padding="18"
                 Opacity="0"
                 Visibility="Collapsed"
-                Margin="8"
-                Padding="14"
                 Background="{StaticResource MenuGlassBrush}"
-                BorderBrush="#B4CDECF3"
-                BorderThickness="1"
-                CornerRadius="10"
-                RenderTransformOrigin="0.08,0.08">
+                BorderThickness="2"
+                CornerRadius="14"
+                ClipToBounds="True"
+                RenderTransformOrigin="0.08,0.12">
+            <Border.BorderBrush>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <LinearGradientBrush.RelativeTransform>
+                        <RotateTransform x:Name="PopupBorderRotate" CenterX="0.5" CenterY="0.5" />
+                    </LinearGradientBrush.RelativeTransform>
+                    <GradientStop Color="#FFDA8CFF" Offset="0" />
+                    <GradientStop Color="#FF72D9FF" Offset="0.45" />
+                    <GradientStop Color="#FFFF799C" Offset="0.75" />
+                    <GradientStop Color="#FFDA8CFF" Offset="1" />
+                </LinearGradientBrush>
+            </Border.BorderBrush>
             <Border.RenderTransform>
                 <TransformGroup>
-                    <ScaleTransform x:Name="MenuScale" ScaleX="0.88" ScaleY="0.88" />
-                    <TranslateTransform x:Name="MenuTranslate" X="-18" Y="-14" />
+                    <ScaleTransform x:Name="MenuScale" ScaleX="0.92" ScaleY="0.92" />
+                    <TranslateTransform x:Name="MenuTranslate" X="-12" Y="12" />
                 </TransformGroup>
             </Border.RenderTransform>
             <Border.Effect>
-                <DropShadowEffect BlurRadius="34" ShadowDepth="0" Color="#FF8BEAFF" Opacity="0.28" />
+                <DropShadowEffect BlurRadius="38" ShadowDepth="0" Color="#FF7CDFFF" Opacity="0.3" />
             </Border.Effect>
 
             <Grid>
-                <Grid.OpacityMask>
-                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                        <GradientStop Color="#FFFFFFFF" Offset="0" />
-                        <GradientStop Color="#FFF7F7F7" Offset="0.72" />
-                        <GradientStop Color="#FFE8E8E8" Offset="1" />
-                    </LinearGradientBrush>
-                </Grid.OpacityMask>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="214" />
-                    <RowDefinition Height="1" />
-                    <RowDefinition Height="165" />
-                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="164" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
 
-                <Grid Grid.Row="0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="214" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
+                <Border x:Name="MenuBackdrop"
+                        Grid.ColumnSpan="2"
+                        Margin="-12"
+                        Opacity="0.13"
+                        CornerRadius="10">
+                    <Border.Effect>
+                        <BlurEffect Radius="24" />
+                    </Border.Effect>
+                </Border>
+                <Border Grid.ColumnSpan="2"
+                        Margin="-18"
+                        Background="#78101219"
+                        CornerRadius="12" />
 
-                    <Border Width="190"
-                            Height="190"
-                            HorizontalAlignment="Left"
-                            VerticalAlignment="Top"
-                            Background="#3820272C"
-                            CornerRadius="95">
-                        <Border.Effect>
-                            <DropShadowEffect BlurRadius="36" ShadowDepth="0" Color="#FFB4F2FF" Opacity="0.76" />
-                        </Border.Effect>
-                    </Border>
-
-                    <Border x:Name="MenuAlbumArtBox"
-                            Width="180"
-                            Height="180"
-                            Margin="5"
-                            HorizontalAlignment="Left"
-                            VerticalAlignment="Top"
-                            Background="#FF20252A"
-                            CornerRadius="90" />
-
-                    <Border Width="32"
-                            Height="32"
-                            Margin="79,79,0,0"
-                            HorizontalAlignment="Left"
-                            VerticalAlignment="Top"
-                            Background="#E80B1115"
-                            CornerRadius="16" />
-
-                    <StackPanel Grid.Column="1" Margin="9,8,0,0">
-                        <TextBlock x:Name="MenuTitleText"
-                                   Foreground="#EAF5F8"
-                                   FontFamily="Consolas"
-                                   FontSize="19"
-                                   FontWeight="Bold"
-                                   Text="SpotiFloat"
-                                   TextTrimming="CharacterEllipsis" />
-                        <TextBlock x:Name="MenuArtistText"
-                                   Margin="0,6,0,0"
-                                   Foreground="#D5E0E4"
-                                   FontFamily="Consolas"
-                                   FontSize="12"
-                                   Text="BY Spotify" />
-                        <TextBlock Margin="0,9,0,0"
-                                   Foreground="#EAF7FA"
-                                   FontFamily="Consolas"
-                                   FontSize="11"
-                                   Text="* Spotify Desktop   VIA Windows Media Session" />
-
-                        <Grid Margin="0,16,4,0">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
-                            <Slider x:Name="MenuSeekSlider"
-                                    Height="18"
-                                    Minimum="0"
-                                    Maximum="1"
-                                    Value="0"
-                                    IsMoveToPointEnabled="True"
-                                    Style="{StaticResource SeekSliderStyle}"
-                                    PreviewMouseLeftButtonDown="MenuSeekSlider_PreviewMouseLeftButtonDown"
-                                    PreviewMouseLeftButtonUp="MenuSeekSlider_PreviewMouseLeftButtonUp" />
-                            <Grid Grid.Row="1" Margin="0,6,0,0">
-                                <TextBlock x:Name="CurrentTimeText"
-                                           Foreground="#E6EEF2"
-                                           FontFamily="Consolas"
-                                           FontSize="12"
-                                           Text="00:00" />
-                                <TextBlock x:Name="DurationText"
-                                           HorizontalAlignment="Right"
-                                           Foreground="#E6EEF2"
-                                           FontFamily="Consolas"
-                                           FontSize="12"
-                                           Text="00:00" />
-                            </Grid>
-                        </Grid>
-
-                        <StackPanel Margin="0,17,0,0"
-                                    HorizontalAlignment="Center"
-                                    Orientation="Horizontal">
-                            <Button Width="50"
-                                    Height="42"
-                                    Click="PreviousButton_Click"
-                                    Style="{StaticResource IconButtonStyle}">
-                                <Viewbox Width="25" Height="25">
-                                    <Canvas Width="32" Height="32">
-                                        <Path Fill="#E8F7FF" Data="M8,6 L11,6 L11,26 L8,26 Z M24,6 L13,16 L24,26 Z" />
-                                    </Canvas>
-                                </Viewbox>
-                            </Button>
-                            <Button x:Name="PlayPauseButton"
-                                    Width="62"
-                                    Height="48"
-                                    Margin="20,0"
-                                    Click="PlayPauseButton_Click"
-                                    Style="{StaticResource IconButtonStyle}">
-                                <Grid>
-                                    <Viewbox x:Name="PauseIcon" Width="31" Height="31">
-                                        <Canvas Width="32" Height="32">
-                                            <Path Fill="#9FE8FF" Data="M8,5 L14,5 L14,27 L8,27 Z M18,5 L24,5 L24,27 L18,27 Z" />
-                                        </Canvas>
-                                    </Viewbox>
-                                    <Viewbox x:Name="PlayIcon" Width="31" Height="31" Visibility="Collapsed">
-                                        <Canvas Width="32" Height="32">
-                                            <Path Fill="#9FE8FF" Data="M9,5 L26,16 L9,27 Z" />
-                                        </Canvas>
-                                    </Viewbox>
-                                </Grid>
-                            </Button>
-                            <Button Width="50"
-                                    Height="42"
-                                    Click="NextButton_Click"
-                                    Style="{StaticResource IconButtonStyle}">
-                                <Viewbox Width="25" Height="25">
-                                    <Canvas Width="32" Height="32">
-                                        <Path Fill="#E8F7FF" Data="M21,6 L24,6 L24,26 L21,26 Z M8,6 L19,16 L8,26 Z" />
-                                    </Canvas>
-                                </Viewbox>
-                            </Button>
-                        </StackPanel>
-                    </StackPanel>
+                <Grid Width="148"
+                      Height="148"
+                      HorizontalAlignment="Left"
+                      VerticalAlignment="Center"
+                      RenderTransformOrigin="0.5,0.5">
+                    <Grid.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform x:Name="MenuAlbumScale" ScaleX="0.78" ScaleY="0.78" />
+                            <TranslateTransform x:Name="MenuAlbumTranslate" X="-30" Y="8" />
+                        </TransformGroup>
+                    </Grid.RenderTransform>
+                    <Ellipse Width="146"
+                             Height="146"
+                             Stroke="{StaticResource PopupBorderBrush}"
+                             StrokeThickness="4"
+                             RenderTransformOrigin="0.5,0.5">
+                        <Ellipse.RenderTransform>
+                            <RotateTransform x:Name="RingRotate" />
+                        </Ellipse.RenderTransform>
+                        <Ellipse.Effect>
+                            <DropShadowEffect BlurRadius="22" ShadowDepth="0" Color="#FF8CDFFF" Opacity="0.5" />
+                        </Ellipse.Effect>
+                    </Ellipse>
+                    <Grid Width="134"
+                          Height="134"
+                          RenderTransformOrigin="0.5,0.5">
+                        <Grid.RenderTransform>
+                            <RotateTransform x:Name="AlbumRotate" />
+                        </Grid.RenderTransform>
+                        <Border x:Name="MenuAlbumArtBox"
+                                Background="#FF22252D"
+                                CornerRadius="67" />
+                        <Border Background="#22000000" CornerRadius="67" />
+                        <Ellipse Width="26" Height="26" Fill="#E80A0C11" Stroke="#503F4652" StrokeThickness="1" />
+                        <Ellipse Width="7" Height="7" Fill="#FFBFC5D2" />
+                    </Grid>
                 </Grid>
 
-                <Border Grid.Row="1" Background="#4FD3F6FF" />
-
-                <Grid Grid.Row="2" Margin="0,8,0,0">
+                <Grid Grid.Column="1"
+                      Margin="10,2,0,2"
+                      RenderTransformOrigin="0.5,0.5">
+                    <Grid.RenderTransform>
+                        <TranslateTransform x:Name="MenuContentTranslate" X="28" />
+                    </Grid.RenderTransform>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
-                        <RowDefinition Height="118" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <Grid>
-                        <TextBlock Foreground="#BDEFFF"
-                                   FontFamily="Consolas"
-                                   FontSize="16"
-                                   FontWeight="SemiBold"
-                                   Text="Visualizer" />
-                        <Border HorizontalAlignment="Right"
-                                Padding="13,6"
-                                Background="#CC141920"
-                                CornerRadius="8">
-                            <TextBlock Foreground="#E6F4F8"
-                                       FontFamily="Consolas"
-                                       Text="Live" />
-                        </Border>
-                    </Grid>
-
-                    <Border Grid.Row="1"
-                            Margin="0,8,0,0"
-                            Padding="12,8"
-                            Background="#8A151C22"
-                            BorderBrush="#306FDDF3"
+                    <Border Grid.Row="0"
+                            HorizontalAlignment="Left"
+                            Padding="8,3"
+                            Background="#261FB9D4"
+                            BorderBrush="#4077DFFF"
                             BorderThickness="1"
-                            CornerRadius="10">
-                        <Border.Effect>
-                            <DropShadowEffect BlurRadius="18" ShadowDepth="0" Color="#FF7BE7FF" Opacity="0.18" />
-                        </Border.Effect>
+                            CornerRadius="8">
+                        <TextBlock Foreground="#FF9CEAFF"
+                                   FontFamily="Segoe UI Variable Text"
+                                   FontSize="9"
+                                   FontWeight="SemiBold"
+                                   Text="SPOTIFY DESKTOP" />
                     </Border>
+                    <TextBlock x:Name="MenuTitleText"
+                               Grid.Row="1"
+                               Margin="0,9,0,0"
+                               Foreground="#FFF7F7FC"
+                               FontFamily="Segoe UI Variable Display"
+                               FontSize="19"
+                               FontWeight="SemiBold"
+                               Text="SpotiFloat"
+                               TextTrimming="CharacterEllipsis" />
+                    <TextBlock x:Name="MenuArtistText"
+                               Grid.Row="2"
+                               Margin="0,3,0,0"
+                               Foreground="#FFADB1BE"
+                               FontFamily="Segoe UI Variable Text"
+                               FontSize="11"
+                               Text="Spotify"
+                               TextTrimming="CharacterEllipsis" />
 
-                    <Grid x:Name="VisualizerGrid"
-                          Grid.Row="1"
-                          Margin="14,17,14,0">
-                        <UniformGrid Columns="20" VerticalAlignment="Bottom">
-                            <Border Height="72" Margin="4,0" Background="#A5BDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz01" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="72" Margin="4,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz02" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="72" Margin="4,0" Background="#D0BDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz03" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="72" Margin="4,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz04" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="72" Margin="4,0" Background="#E29FE8FF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz05" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="72" Margin="4,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz06" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="72" Margin="4,0" Background="#D8BDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz07" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="72" Margin="4,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz08" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="72" Margin="4,0" Background="#E29FE8FF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz09" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="72" Margin="4,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz10" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="72" Margin="4,0" Background="#C8BDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz11" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="72" Margin="4,0" Background="#D89FE8FF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz12" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="72" Margin="4,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz13" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="72" Margin="4,0" Background="#D0BDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz14" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="72" Margin="4,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz15" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="72" Margin="4,0" Background="#E29FE8FF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz16" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="72" Margin="4,0" Background="#BDBDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz17" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="72" Margin="4,0" Background="#D0BDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz18" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="72" Margin="4,0" Background="#A5BDEFFF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz19" ScaleY="0.18" /></Border.RenderTransform></Border>
-                            <Border Height="72" Margin="4,0" Background="#D89FE8FF" CornerRadius="5" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz20" ScaleY="0.18" /></Border.RenderTransform></Border>
-                        </UniformGrid>
+                    <Grid Grid.Row="3" Margin="0,16,0,0">
+                        <Grid.RenderTransform>
+                            <TranslateTransform x:Name="MenuProgressTranslate" Y="12" />
+                        </Grid.RenderTransform>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Slider x:Name="MenuSeekSlider"
+                                Height="20"
+                                Minimum="0"
+                                Maximum="1"
+                                Value="0"
+                                IsMoveToPointEnabled="True"
+                                Style="{StaticResource SeekSliderStyle}"
+                                PreviewMouseLeftButtonDown="MenuSeekSlider_PreviewMouseLeftButtonDown"
+                                PreviewMouseLeftButtonUp="MenuSeekSlider_PreviewMouseLeftButtonUp" />
+                        <Grid Grid.Row="1" Margin="1,3,1,0">
+                            <TextBlock x:Name="CurrentTimeText"
+                                       Foreground="#FF9EA4B2"
+                                       FontFamily="Consolas"
+                                       FontSize="10"
+                                       Text="00:00" />
+                            <TextBlock x:Name="DurationText"
+                                       HorizontalAlignment="Right"
+                                       Foreground="#FF9EA4B2"
+                                       FontFamily="Consolas"
+                                       FontSize="10"
+                                       Text="00:00" />
+                        </Grid>
                     </Grid>
+
+                    <StackPanel x:Name="MenuControls"
+                                Grid.Row="4"
+                                Margin="0,12,0,0"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Orientation="Horizontal">
+                        <StackPanel.RenderTransform>
+                            <TranslateTransform x:Name="MenuControlsTranslate" Y="15" />
+                        </StackPanel.RenderTransform>
+                        <Button Width="44"
+                                Height="44"
+                                Click="PreviousButton_Click"
+                                Style="{StaticResource IconButtonStyle}">
+                            <Viewbox Width="21" Height="21">
+                                <Canvas Width="32" Height="32">
+                                    <Path Fill="#DDE5F2" Data="M8,6 L11,6 L11,26 L8,26 Z M24,6 L13,16 L24,26 Z" />
+                                </Canvas>
+                            </Viewbox>
+                        </Button>
+                        <Button x:Name="PlayPauseButton"
+                                Width="52"
+                                Height="52"
+                                Margin="14,0"
+                                Click="PlayPauseButton_Click"
+                                Background="#24FFFFFF"
+                                Style="{StaticResource IconButtonStyle}">
+                            <Grid>
+                                <Ellipse Fill="{StaticResource AccentBrush}">
+                                    <Ellipse.Effect>
+                                        <DropShadowEffect BlurRadius="15" ShadowDepth="0" Color="#FF8DE5FF" Opacity="0.38" />
+                                    </Ellipse.Effect>
+                                </Ellipse>
+                                <Viewbox x:Name="PauseIcon" Width="22" Height="22">
+                                    <Canvas Width="32" Height="32">
+                                        <Path Fill="#FF11141B" Data="M8,6 L14,6 L14,26 L8,26 Z M18,6 L24,6 L24,26 L18,26 Z" />
+                                    </Canvas>
+                                </Viewbox>
+                                <Viewbox x:Name="PlayIcon" Width="22" Height="22" Visibility="Collapsed">
+                                    <Canvas Width="32" Height="32">
+                                        <Path Fill="#FF11141B" Data="M10,6 L25,16 L10,26 Z" />
+                                    </Canvas>
+                                </Viewbox>
+                            </Grid>
+                        </Button>
+                        <Button Width="44"
+                                Height="44"
+                                Click="NextButton_Click"
+                                Style="{StaticResource IconButtonStyle}">
+                            <Viewbox Width="21" Height="21">
+                                <Canvas Width="32" Height="32">
+                                    <Path Fill="#DDE5F2" Data="M21,6 L24,6 L24,26 L21,26 Z M8,6 L19,16 L8,26 Z" />
+                                </Canvas>
+                            </Viewbox>
+                        </Button>
+                    </StackPanel>
                 </Grid>
             </Grid>
         </Border>
