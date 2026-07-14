@@ -10,10 +10,14 @@ namespace SpotiFloat.Services;
 
 public sealed class AudioVisualizerService : IDisposable
 {
-    private const int FftSize = 1024;
+    private const int FftSize = 2048;
+    private const double MinimumFrequency = 35;
+    private const double MaximumFrequency = 16000;
     private readonly object syncRoot = new();
     private readonly float[] samples = new float[FftSize];
     private WasapiLoopbackCapture? capture;
+    private double[] smoothedBands = Array.Empty<double>();
+    private int sampleRate = 48000;
     private int writeIndex;
 
     public void Start()
@@ -26,6 +30,7 @@ public sealed class AudioVisualizerService : IDisposable
         try
         {
             capture = new WasapiLoopbackCapture();
+            sampleRate = capture.WaveFormat.SampleRate;
             capture.DataAvailable += Capture_DataAvailable;
             capture.RecordingStopped += (_, _) => DisposeCapture();
             capture.StartRecording();
@@ -38,7 +43,13 @@ public sealed class AudioVisualizerService : IDisposable
 
     public double[] GetBands(int count)
     {
+        if (count <= 0)
+        {
+            return Array.Empty<double>();
+        }
+
         var fft = new Complex[FftSize];
+        var signalPower = 0.0;
         lock (syncRoot)
         {
             for (var i = 0; i < FftSize; i++)
@@ -47,48 +58,62 @@ public sealed class AudioVisualizerService : IDisposable
                 var window = 0.5 * (1 - Math.Cos(2 * Math.PI * i / (FftSize - 1)));
                 fft[i].X = (float)(samples[index] * window);
                 fft[i].Y = 0;
+                signalPower += samples[index] * samples[index];
             }
+        }
+
+        EnsureSmoothingBuffer(count);
+        if (Math.Sqrt(signalPower / FftSize) < 0.0008)
+        {
+            Array.Fill(smoothedBands, 0);
+            return new double[count];
         }
 
         FastFourierTransform.FFT(true, (int)Math.Log2(FftSize), fft);
 
         var bands = new double[count];
         var usableBins = FftSize / 2;
-        var total = 0.0;
+        var highestFrequency = Math.Min(MaximumFrequency, sampleRate / 2.0);
         for (var band = 0; band < count; band++)
         {
-            var start = GetLogBin(band, count, usableBins);
-            var end = Math.Max(start + 1, GetLogBin(band + 1, count, usableBins));
-            var sum = 0.0;
+            var start = GetLogBin(band, count, usableBins, highestFrequency);
+            var end = Math.Max(start + 1, GetLogBin(band + 1, count, usableBins, highestFrequency));
+            var sumSquares = 0.0;
             var peak = 0.0;
 
             for (var i = start; i < end; i++)
             {
                 var magnitude = Math.Sqrt(fft[i].X * fft[i].X + fft[i].Y * fft[i].Y);
-                sum += magnitude;
+                sumSquares += magnitude * magnitude;
                 peak = Math.Max(peak, magnitude);
             }
 
-            var average = sum / Math.Max(end - start, 1);
-            var level = peak * 0.65 + average * 0.35;
-            total += level;
-            bands[band] = Math.Clamp(Math.Pow(Math.Log10(1 + level * 520), 0.62), 0, 1);
-        }
+            var rms = Math.Sqrt(sumSquares / Math.Max(end - start, 1));
+            var frequencyCompensation = 1 + 1.7 * band / Math.Max(count - 1.0, 1);
+            var level = (peak * 0.58 + rms * 0.42) * frequencyCompensation;
+            var target = Math.Clamp(Math.Pow(Math.Log10(1 + level * 620), 0.68), 0, 1);
 
-        if (total < 0.006)
-        {
-            Array.Fill(bands, 0);
+            var smoothing = target > smoothedBands[band] ? 0.72 : 0.28;
+            smoothedBands[band] += (target - smoothedBands[band]) * smoothing;
+            bands[band] = smoothedBands[band];
         }
 
         return bands;
     }
 
-    private static int GetLogBin(int band, int count, int usableBins)
+    private int GetLogBin(int band, int count, int usableBins, double highestFrequency)
     {
-        var min = Math.Log(2);
-        var max = Math.Log(usableBins);
-        var value = Math.Exp(min + (max - min) * band / count);
-        return Math.Clamp((int)Math.Round(value), 1, usableBins - 1);
+        var frequency = MinimumFrequency * Math.Pow(highestFrequency / MinimumFrequency, band / (double)count);
+        var bin = frequency * FftSize / sampleRate;
+        return Math.Clamp((int)Math.Round(bin), 1, usableBins - 1);
+    }
+
+    private void EnsureSmoothingBuffer(int count)
+    {
+        if (smoothedBands.Length != count)
+        {
+            smoothedBands = new double[count];
+        }
     }
 
     public void Dispose()

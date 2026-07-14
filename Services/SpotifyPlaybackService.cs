@@ -31,8 +31,8 @@ public sealed class SpotifyPlaybackService
         var title = string.IsNullOrWhiteSpace(media.Title) ? "Unknown track" : media.Title;
         var artist = string.IsNullOrWhiteSpace(media.Artist) ? "Spotify" : media.Artist;
         var albumArtBytes = await ReadThumbnailAsync(media.Thumbnail);
-        var progressMs = (int)Math.Max(timeline.Position.TotalMilliseconds, 0);
         var durationMs = (int)Math.Max(timeline.EndTime.TotalMilliseconds, 1);
+        var progressMs = GetCurrentProgressMs(timeline, durationMs, isPlaying);
 
         return new SpotifyNowPlaying(title, artist, albumArtBytes, progressMs, durationMs, isPlaying);
     }
@@ -82,6 +82,24 @@ public sealed class SpotifyPlaybackService
     private static bool IsSpotifySession(GlobalSystemMediaTransportControlsSession session)
     {
         return session.SourceAppUserModelId.Contains("Spotify", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static int GetCurrentProgressMs(
+        GlobalSystemMediaTransportControlsSessionTimelineProperties timeline,
+        int durationMs,
+        bool isPlaying)
+    {
+        var position = timeline.Position;
+        if (isPlaying && timeline.LastUpdatedTime != default)
+        {
+            var elapsed = DateTimeOffset.Now - timeline.LastUpdatedTime;
+            if (elapsed > TimeSpan.Zero)
+            {
+                position += elapsed;
+            }
+        }
+
+        return (int)Math.Clamp(position.TotalMilliseconds, 0, durationMs);
     }
 
     private static async Task<byte[]?> ReadThumbnailAsync(IRandomAccessStreamReference? thumbnail)

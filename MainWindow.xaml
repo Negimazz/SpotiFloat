@@ -37,6 +37,11 @@ RELATED FILES: MainWindow.xaml.cs, Services/SpotifyPlaybackService.cs, Models/Sp
             <GradientStop Color="#FF77DFFF" Offset="0.52" />
             <GradientStop Color="#FFFF83A7" Offset="1" />
         </LinearGradientBrush>
+        <LinearGradientBrush x:Key="VisualizerBrush" StartPoint="0,1" EndPoint="0,0">
+            <GradientStop Color="#FF8F7CFF" Offset="0" />
+            <GradientStop Color="#FF74DFFF" Offset="0.55" />
+            <GradientStop Color="#FFFF91B1" Offset="1" />
+        </LinearGradientBrush>
         <Style x:Key="IconButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
@@ -190,7 +195,7 @@ RELATED FILES: MainWindow.xaml.cs, Services/SpotifyPlaybackService.cs, Models/Sp
 
         <Border x:Name="MenuPanel"
                 Width="500"
-                Height="270"
+                Height="330"
                 Margin="8"
                 Padding="18"
                 Opacity="0"
@@ -222,12 +227,18 @@ RELATED FILES: MainWindow.xaml.cs, Services/SpotifyPlaybackService.cs, Models/Sp
             </Border.Effect>
 
             <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="228" />
+                    <RowDefinition Height="1" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="164" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
                 <Border x:Name="MenuBackdrop"
+                        Grid.RowSpan="3"
                         Grid.ColumnSpan="2"
                         Margin="-12"
                         Opacity="0.13"
@@ -236,7 +247,8 @@ RELATED FILES: MainWindow.xaml.cs, Services/SpotifyPlaybackService.cs, Models/Sp
                         <BlurEffect Radius="24" />
                     </Border.Effect>
                 </Border>
-                <Border Grid.ColumnSpan="2"
+                <Border Grid.RowSpan="3"
+                        Grid.ColumnSpan="2"
                         Margin="-18"
                         Background="#78101219"
                         CornerRadius="12" />
@@ -279,7 +291,8 @@ RELATED FILES: MainWindow.xaml.cs, Services/SpotifyPlaybackService.cs, Models/Sp
                     </Grid>
                 </Grid>
 
-                <Grid Grid.Column="1"
+                <Grid Grid.Row="0"
+                      Grid.Column="1"
                       Margin="10,2,0,2"
                       RenderTransformOrigin="0.5,0.5">
                     <Grid.RenderTransform>
@@ -411,6 +424,53 @@ RELATED FILES: MainWindow.xaml.cs, Services/SpotifyPlaybackService.cs, Models/Sp
                             </Viewbox>
                         </Button>
                     </StackPanel>
+                </Grid>
+
+                <Border Grid.Row="1"
+                        Grid.ColumnSpan="2"
+                        Background="#406C7486" />
+
+                <Grid x:Name="VisualizerGrid"
+                      Grid.Row="2"
+                      Grid.ColumnSpan="2"
+                      Margin="0,7,0,0"
+                      Opacity="0">
+                    <Grid.RenderTransform>
+                        <TranslateTransform x:Name="VisualizerTranslate" Y="8" />
+                    </Grid.RenderTransform>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="112" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Foreground="#FFE4E7F1"
+                                   FontFamily="Segoe UI Variable Text"
+                                   FontSize="10"
+                                   FontWeight="SemiBold"
+                                   Text="AUDIO SPECTRUM" />
+                        <TextBlock Margin="0,2,0,0"
+                                   Foreground="#FF777E8F"
+                                   FontFamily="Segoe UI Variable Text"
+                                   FontSize="8"
+                                   Text="LOW  /  HIGH" />
+                    </StackPanel>
+
+                    <UniformGrid Grid.Column="1"
+                                 Columns="10"
+                                 Height="40"
+                                 VerticalAlignment="Center">
+                        <Border Height="38" Margin="8,0" Background="{StaticResource VisualizerBrush}" CornerRadius="4" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz01" ScaleY="0.12" /></Border.RenderTransform></Border>
+                        <Border Height="38" Margin="8,0" Background="{StaticResource VisualizerBrush}" CornerRadius="4" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz02" ScaleY="0.12" /></Border.RenderTransform></Border>
+                        <Border Height="38" Margin="8,0" Background="{StaticResource VisualizerBrush}" CornerRadius="4" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz03" ScaleY="0.12" /></Border.RenderTransform></Border>
+                        <Border Height="38" Margin="8,0" Background="{StaticResource VisualizerBrush}" CornerRadius="4" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz04" ScaleY="0.12" /></Border.RenderTransform></Border>
+                        <Border Height="38" Margin="8,0" Background="{StaticResource VisualizerBrush}" CornerRadius="4" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz05" ScaleY="0.12" /></Border.RenderTransform></Border>
+                        <Border Height="38" Margin="8,0" Background="{StaticResource VisualizerBrush}" CornerRadius="4" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz06" ScaleY="0.12" /></Border.RenderTransform></Border>
+                        <Border Height="38" Margin="8,0" Background="{StaticResource VisualizerBrush}" CornerRadius="4" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz07" ScaleY="0.12" /></Border.RenderTransform></Border>
+                        <Border Height="38" Margin="8,0" Background="{StaticResource VisualizerBrush}" CornerRadius="4" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz08" ScaleY="0.12" /></Border.RenderTransform></Border>
+                        <Border Height="38" Margin="8,0" Background="{StaticResource VisualizerBrush}" CornerRadius="4" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz09" ScaleY="0.12" /></Border.RenderTransform></Border>
+                        <Border Height="38" Margin="8,0" Background="{StaticResource VisualizerBrush}" CornerRadius="4" VerticalAlignment="Bottom" RenderTransformOrigin="0.5,1"><Border.RenderTransform><ScaleTransform x:Name="Viz10" ScaleY="0.12" /></Border.RenderTransform></Border>
+                    </UniformGrid>
                 </Grid>
             </Grid>
         </Border>

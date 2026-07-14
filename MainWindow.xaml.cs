@@ -27,15 +27,18 @@ public partial class MainWindow : Window
     private const int ModControl = 0x0002;
     private const int VirtualKeyM = 0x4D;
     private const int WmHotkey = 0x0312;
+    private const int ProgressRollbackToleranceMs = 900;
     private const double CompactWidth = 342;
     private const double CompactHeight = 92;
     private const double MenuWidth = 516;
-    private const double MenuHeight = 286;
+    private const double MenuHeight = 346;
 
     private readonly SpotifyPlaybackService playbackService = new();
     private readonly DispatcherTimer refreshTimer = new();
     private readonly DispatcherTimer progressTimer = new();
+    private readonly DispatcherTimer visualizerTimer = new();
     private readonly Forms.NotifyIcon trayIcon = new();
+    private readonly AudioVisualizerService audioVisualizerService = new();
 
     private DateTime progressUpdatedAtUtc;
     private int lastProgressMs;
@@ -56,6 +59,8 @@ public partial class MainWindow : Window
         refreshTimer.Tick += async (_, _) => await RefreshPlaybackAsync();
         progressTimer.Interval = TimeSpan.FromMilliseconds(100);
         progressTimer.Tick += (_, _) => UpdateSmoothProgress();
+        visualizerTimer.Interval = TimeSpan.FromMilliseconds(65);
+        visualizerTimer.Tick += (_, _) => UpdateVisualizer();
 
         ConfigureTrayIcon();
     }
@@ -73,6 +78,8 @@ public partial class MainWindow : Window
     {
         refreshTimer.Start();
         progressTimer.Start();
+        visualizerTimer.Start();
+        audioVisualizerService.Start();
         await RefreshPlaybackAsync();
     }
 
@@ -87,6 +94,7 @@ public partial class MainWindow : Window
 
         trayIcon.Visible = false;
         trayIcon.Dispose();
+        audioVisualizerService.Dispose();
         UnregisterHotKey(new WindowInteropHelper(this).Handle, HotkeyId);
     }
 
@@ -161,6 +169,7 @@ public partial class MainWindow : Window
         CompactOverlay.Visibility = Visibility.Collapsed;
 
         MenuControls.Opacity = 0;
+        VisualizerGrid.Opacity = 0;
         StartRingRotation();
         UpdateAlbumRotation();
 
@@ -179,6 +188,8 @@ public partial class MainWindow : Window
         Animate(MenuProgressTranslate, TranslateTransform.YProperty, 12, 0, 460, pop, 210);
         Animate(MenuControls, OpacityProperty, 0, 1, 360, smooth, 240);
         Animate(MenuControlsTranslate, TranslateTransform.YProperty, 15, 0, 480, pop, 240);
+        Animate(VisualizerGrid, OpacityProperty, 0, 1, 360, smooth, 310);
+        Animate(VisualizerTranslate, TranslateTransform.YProperty, 8, 0, 420, smooth, 310);
     }
 
     private void CloseMenu()
@@ -304,9 +315,12 @@ public partial class MainWindow : Window
     private void SetProgressSource(int progressMs, int durationMs, bool isSameTrack, bool acceptRollback = false)
     {
         var visibleProgressMs = GetVisibleProgressMs();
-        lastProgressMs = isSameTrack && !acceptRollback
-            ? Math.Max(progressMs, visibleProgressMs)
-            : progressMs;
+        var rollbackMs = visibleProgressMs - progressMs;
+        var isMinorPollingRollback = isSameTrack
+            && !acceptRollback
+            && rollbackMs > 0
+            && rollbackMs <= ProgressRollbackToleranceMs;
+        lastProgressMs = isMinorPollingRollback ? visibleProgressMs : progressMs;
         lastDurationMs = Math.Max(durationMs, 1);
         progressUpdatedAtUtc = DateTime.UtcNow;
     }
@@ -376,6 +390,24 @@ public partial class MainWindow : Window
         SetProgressSource(positionMs, lastDurationMs, true, true);
         UpdateSmoothProgress();
         await RefreshAfterCommandAsync();
+    }
+
+    private void UpdateVisualizer()
+    {
+        var bars = GetVisualizerBars();
+        var levels = isPlaybackMoving ? audioVisualizerService.GetBands(bars.Length) : new double[bars.Length];
+        var isSilent = levels.All(level => level <= 0);
+
+        for (var i = 0; i < bars.Length; i++)
+        {
+            var target = isSilent ? 0.12 : 0.14 + levels[i] * 0.86;
+            Animate(bars[i], ScaleTransform.ScaleYProperty, bars[i].ScaleY, target, 90);
+        }
+    }
+
+    private ScaleTransform[] GetVisualizerBars()
+    {
+        return new[] { Viz01, Viz02, Viz03, Viz04, Viz05, Viz06, Viz07, Viz08, Viz09, Viz10 };
     }
 
     private void StartRingRotation()
