@@ -29,6 +29,11 @@ public partial class MainWindow : Window
     private const int VirtualKeyM = 0x4D;
     private const int WmHotkey = 0x0312;
     private const int ProgressRollbackToleranceMs = 900;
+    private const uint SwpNoSize = 0x0001;
+    private const uint SwpNoMove = 0x0002;
+    private const uint SwpNoActivate = 0x0010;
+    private const uint SwpShowWindow = 0x0040;
+    private static readonly IntPtr HwndTopmost = new(-1);
     private static readonly bool UseTaskbarOverlay = true;
     private const double TaskbarCompactWidth = 228;
     private const double TaskbarVerticalMargin = 6;
@@ -74,7 +79,7 @@ public partial class MainWindow : Window
         progressTimer.Tick += (_, _) => UpdateSmoothProgress();
         visualizerTimer.Interval = TimeSpan.FromMilliseconds(65);
         visualizerTimer.Tick += (_, _) => UpdateVisualizer();
-        taskbarTimer.Interval = TimeSpan.FromSeconds(1);
+        taskbarTimer.Interval = TimeSpan.FromMilliseconds(250);
         taskbarTimer.Tick += (_, _) => PositionTaskbarOverlay();
 
         ConfigureTrayIcon();
@@ -240,6 +245,25 @@ public partial class MainWindow : Window
         Left = taskbarCompactLeft;
         Top = taskbarBounds.Top + (taskbarBounds.Height - compactHeight) / 2;
         TaskbarOverlay.Opacity = 1;
+        KeepTaskbarOverlayAboveTaskbar();
+    }
+
+    private void KeepTaskbarOverlayAboveTaskbar()
+    {
+        var windowHandle = new WindowInteropHelper(this).Handle;
+        if (windowHandle == IntPtr.Zero)
+        {
+            return;
+        }
+
+        SetWindowPos(
+            windowHandle,
+            HwndTopmost,
+            0,
+            0,
+            0,
+            0,
+            SwpNoMove | SwpNoSize | SwpNoActivate | SwpShowWindow);
     }
 
     private void ShowLegacyOverlayFallback()
@@ -484,6 +508,7 @@ public partial class MainWindow : Window
             TitleText.Text = currentTrack.Title;
             ArtistText.Text = currentTrack.Artist;
             TaskbarTitleText.Text = currentTrack.Title;
+            TaskbarArtistText.Text = currentTrack.Artist;
             MenuTitleText.Text = currentTrack.Title;
             MenuArtistText.Text = $"BY {currentTrack.Artist}";
             PauseIcon.Visibility = currentTrack.IsPlaying ? Visibility.Visible : Visibility.Collapsed;
@@ -509,6 +534,7 @@ public partial class MainWindow : Window
         TitleText.Text = title;
         ArtistText.Text = subtitle;
         TaskbarTitleText.Text = title;
+        TaskbarArtistText.Text = subtitle;
         MenuTitleText.Text = title;
         MenuArtistText.Text = subtitle;
         PauseIcon.Visibility = Visibility.Collapsed;
@@ -788,6 +814,16 @@ public partial class MainWindow : Window
 
     [DllImport("user32.dll")]
     private static extern uint GetDpiForWindow(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    private static extern bool SetWindowPos(
+        IntPtr hWnd,
+        IntPtr hWndInsertAfter,
+        int x,
+        int y,
+        int width,
+        int height,
+        uint flags);
 
     [DllImport("user32.dll")]
     private static extern bool RegisterHotKey(IntPtr hWnd, int id, int fsModifiers, int vk);
