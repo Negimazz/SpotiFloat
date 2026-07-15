@@ -284,14 +284,6 @@ public partial class MainWindow : Window
             taskbarBounds.Left + 4,
             taskbarBounds.Right - TaskbarCompactWidth - 4);
 
-        var positionChanged = CompactOverlay.Visibility == Visibility.Visible
-            || TaskbarOverlay.Visibility != Visibility.Visible
-            || TaskbarOverlay.Opacity < 1
-            || Math.Abs(Width - TaskbarCompactWidth) > 0.1
-            || Math.Abs(Height - compactHeight) > 0.1
-            || Math.Abs(Left - taskbarCompactLeft) > 0.1
-            || Math.Abs(Top - (taskbarBounds.Top + (taskbarBounds.Height - compactHeight) / 2)) > 0.1;
-
         CompactOverlay.Visibility = Visibility.Collapsed;
         TaskbarOverlay.Visibility = Visibility.Visible;
         Width = TaskbarCompactWidth;
@@ -299,10 +291,7 @@ public partial class MainWindow : Window
         Left = taskbarCompactLeft;
         Top = taskbarBounds.Top + (taskbarBounds.Height - compactHeight) / 2;
         TaskbarOverlay.Opacity = 1;
-        if (positionChanged)
-        {
-            KeepTaskbarOverlayAboveTaskbar();
-        }
+        KeepTaskbarOverlayAboveTaskbar();
     }
 
     private void ForegroundWindowChanged(
