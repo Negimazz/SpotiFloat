@@ -204,14 +204,14 @@ public partial class MainWindow : Window
 
         if (!TryUpdateTaskbarLayout(out var widgetsBounds))
         {
-            TaskbarOverlay.Opacity = 0;
+            ShowLegacyOverlayFallback();
             return;
         }
 
         var isHorizontal = taskbarBounds.Width >= taskbarBounds.Height;
         if (!isHorizontal)
         {
-            TaskbarOverlay.Opacity = 0;
+            ShowLegacyOverlayFallback();
             return;
         }
 
@@ -233,11 +233,32 @@ public partial class MainWindow : Window
             taskbarBounds.Left + 4,
             taskbarBounds.Right - TaskbarCompactWidth - 4);
 
+        CompactOverlay.Visibility = Visibility.Collapsed;
+        TaskbarOverlay.Visibility = Visibility.Visible;
         Width = TaskbarCompactWidth;
         Height = compactHeight;
         Left = taskbarCompactLeft;
         Top = taskbarBounds.Top + (taskbarBounds.Height - compactHeight) / 2;
         TaskbarOverlay.Opacity = 1;
+    }
+
+    private void ShowLegacyOverlayFallback()
+    {
+        var wasAlreadyVisible = CompactOverlay.Visibility == Visibility.Visible;
+        TaskbarOverlay.Opacity = 0;
+        TaskbarOverlay.Visibility = Visibility.Collapsed;
+        CompactOverlay.Visibility = Visibility.Visible;
+        Width = CompactWidth;
+        Height = CompactHeight;
+
+        if (wasAlreadyVisible)
+        {
+            return;
+        }
+
+        var workArea = SystemParameters.WorkArea;
+        Left = Math.Max(workArea.Left + 8, workArea.Right - CompactWidth - 16);
+        Top = workArea.Top + 16;
     }
 
     private void PositionExpandedMenu()
