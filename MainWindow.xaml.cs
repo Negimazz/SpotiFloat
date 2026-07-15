@@ -30,6 +30,11 @@ public partial class MainWindow : Window
     private const int WmHotkey = 0x0312;
     private const uint EventSystemForeground = 0x0003;
     private const uint WineventSkipOwnProcess = 0x0002;
+    private const int ShellWindowCreated = 1;
+    private const int ShellWindowDestroyed = 2;
+    private const int ShellWindowActivated = 4;
+    private const int ShellRedraw = 6;
+    private const int ShellRudeAppActivated = 0x8004;
     private const int ProgressRollbackToleranceMs = 900;
     private const uint SwpNoSize = 0x0001;
     private const uint SwpNoMove = 0x0002;
@@ -72,6 +77,7 @@ public partial class MainWindow : Window
     private Rect? cachedWidgetsBounds;
     private DateTime widgetsBoundsCheckedAtUtc;
     private IntPtr foregroundEventHook;
+    private int shellHookMessage;
     private SpotifyNowPlaying? currentTrack;
 
     public MainWindow()
@@ -87,7 +93,7 @@ public partial class MainWindow : Window
         visualizerTimer.Tick += (_, _) => UpdateVisualizer();
         taskbarTimer.Interval = TimeSpan.FromSeconds(1);
         taskbarTimer.Tick += (_, _) => PositionTaskbarOverlay();
-        zOrderRestoreTimer.Interval = TimeSpan.FromMilliseconds(180);
+        zOrderRestoreTimer.Interval = TimeSpan.FromMilliseconds(350);
         zOrderRestoreTimer.Tick += (_, _) =>
         {
             zOrderRestoreTimer.Stop();
@@ -103,7 +109,10 @@ public partial class MainWindow : Window
 
         var source = HwndSource.FromHwnd(new WindowInteropHelper(this).Handle);
         source?.AddHook(WndProc);
-        RegisterHotKey(source?.Handle ?? IntPtr.Zero, HotkeyId, ModControl | ModAlt, VirtualKeyM);
+        var windowHandle = source?.Handle ?? IntPtr.Zero;
+        RegisterHotKey(windowHandle, HotkeyId, ModControl | ModAlt, VirtualKeyM);
+        shellHookMessage = RegisterWindowMessage("SHELLHOOK");
+        RegisterShellHookWindow(windowHandle);
         foregroundEventHook = SetWinEventHook(
             EventSystemForeground,
             EventSystemForeground,
@@ -143,7 +152,9 @@ public partial class MainWindow : Window
         {
             UnhookWinEvent(foregroundEventHook);
         }
-        UnregisterHotKey(new WindowInteropHelper(this).Handle, HotkeyId);
+        var windowHandle = new WindowInteropHelper(this).Handle;
+        DeregisterShellHookWindow(windowHandle);
+        UnregisterHotKey(windowHandle, HotkeyId);
     }
 
     private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -305,18 +316,22 @@ public partial class MainWindow : Window
             return;
         }
 
-        Dispatcher.BeginInvoke(new Action(ScheduleZOrderRestore));
+        Dispatcher.BeginInvoke(new Action(() => ScheduleZOrderRestore(true)));
     }
 
-    private void ScheduleZOrderRestore()
+    private void ScheduleZOrderRestore(bool restoreImmediately)
     {
         if (!IsVisible || TaskbarOverlay.Visibility != Visibility.Visible)
         {
             return;
         }
 
-        // Restore twice around the shell transition without continuously fighting its flyouts.
-        KeepTaskbarOverlayAboveTaskbar();
+        if (restoreImmediately)
+        {
+            KeepTaskbarOverlayAboveTaskbar();
+        }
+
+        // Debounce shell animations, then restore once after their final z-order update.
         zOrderRestoreTimer.Stop();
         zOrderRestoreTimer.Start();
     }
@@ -861,6 +876,22 @@ public partial class MainWindow : Window
 
     private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
+        if (shellHookMessage != 0 && msg == shellHookMessage)
+        {
+            var shellEvent = wParam.ToInt32();
+            var isRelevantEvent = shellEvent == ShellWindowCreated
+                || shellEvent == ShellWindowDestroyed
+                || shellEvent == ShellWindowActivated
+                || shellEvent == ShellRedraw
+                || shellEvent == ShellRudeAppActivated;
+            if (isRelevantEvent)
+            {
+                var restoreImmediately = shellEvent == ShellWindowActivated
+                    || shellEvent == ShellRudeAppActivated;
+                ScheduleZOrderRestore(restoreImmediately);
+            }
+        }
+
         if (msg == WmHotkey && wParam.ToInt32() == HotkeyId)
         {
             ToggleMenu();
@@ -919,6 +950,15 @@ public partial class MainWindow : Window
 
     [DllImport("user32.dll")]
     private static extern bool UnhookWinEvent(IntPtr eventHook);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern int RegisterWindowMessage(string message);
+
+    [DllImport("user32.dll")]
+    private static extern bool RegisterShellHookWindow(IntPtr windowHandle);
+
+    [DllImport("user32.dll")]
+    private static extern bool DeregisterShellHookWindow(IntPtr windowHandle);
 
     [DllImport("user32.dll")]
     private static extern bool RegisterHotKey(IntPtr hWnd, int id, int fsModifiers, int vk);
