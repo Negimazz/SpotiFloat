@@ -7,6 +7,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
@@ -28,6 +29,11 @@ public partial class MainWindow : Window
     private const int VirtualKeyM = 0x4D;
     private const int WmHotkey = 0x0312;
     private const int ProgressRollbackToleranceMs = 900;
+    private const bool UseTaskbarOverlay = true;
+    private const double TaskbarCompactWidth = 228;
+    private const double TaskbarVerticalMargin = 6;
+    private const double TaskbarWidgetGap = 8;
+    private const double TaskbarFallbackWidgetWidth = 152;
     private const double CompactWidth = 342;
     private const double CompactHeight = 92;
     private const double MenuWidth = 516;
@@ -37,6 +43,7 @@ public partial class MainWindow : Window
     private readonly DispatcherTimer refreshTimer = new();
     private readonly DispatcherTimer progressTimer = new();
     private readonly DispatcherTimer visualizerTimer = new();
+    private readonly DispatcherTimer taskbarTimer = new();
     private readonly Forms.NotifyIcon trayIcon = new();
     private readonly AudioVisualizerService audioVisualizerService = new();
 
@@ -49,6 +56,12 @@ public partial class MainWindow : Window
     private bool isSeeking;
     private bool isExitRequested;
     private bool isAlbumRotating;
+    private Rect taskbarBounds;
+    private Rect taskbarScreenBounds;
+    private double taskbarCompactLeft;
+    private IntPtr lastTaskbarHandle;
+    private Rect? cachedWidgetsBounds;
+    private DateTime widgetsBoundsCheckedAtUtc;
     private SpotifyNowPlaying? currentTrack;
 
     public MainWindow()
@@ -61,6 +74,8 @@ public partial class MainWindow : Window
         progressTimer.Tick += (_, _) => UpdateSmoothProgress();
         visualizerTimer.Interval = TimeSpan.FromMilliseconds(65);
         visualizerTimer.Tick += (_, _) => UpdateVisualizer();
+        taskbarTimer.Interval = TimeSpan.FromSeconds(1);
+        taskbarTimer.Tick += (_, _) => PositionTaskbarOverlay();
 
         ConfigureTrayIcon();
     }
@@ -79,7 +94,9 @@ public partial class MainWindow : Window
         refreshTimer.Start();
         progressTimer.Start();
         visualizerTimer.Start();
+        taskbarTimer.Start();
         audioVisualizerService.Start();
+        ShowCompactSurface();
         await RefreshPlaybackAsync();
     }
 
@@ -94,12 +111,19 @@ public partial class MainWindow : Window
 
         trayIcon.Visible = false;
         trayIcon.Dispose();
+        taskbarTimer.Stop();
         audioVisualizerService.Dispose();
         UnregisterHotKey(new WindowInteropHelper(this).Handle, HotkeyId);
     }
 
     private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
+        if (UseTaskbarOverlay && !isMenuOpen && TaskbarOverlay.Visibility == Visibility.Visible)
+        {
+            OpenMenu();
+            return;
+        }
+
         DragMove();
     }
 
@@ -147,6 +171,205 @@ public partial class MainWindow : Window
 
         Show();
         Activate();
+        if (!isMenuOpen)
+        {
+            ShowCompactSurface();
+        }
+    }
+
+    private void ShowCompactSurface()
+    {
+        MenuPanel.Visibility = Visibility.Collapsed;
+        if (UseTaskbarOverlay)
+        {
+            CompactOverlay.Visibility = Visibility.Collapsed;
+            TaskbarOverlay.Visibility = Visibility.Visible;
+            Width = TaskbarCompactWidth;
+            PositionTaskbarOverlay();
+            return;
+        }
+
+        TaskbarOverlay.Visibility = Visibility.Collapsed;
+        CompactOverlay.Visibility = Visibility.Visible;
+        Width = CompactWidth;
+        Height = CompactHeight;
+    }
+
+    private void PositionTaskbarOverlay()
+    {
+        if (!UseTaskbarOverlay || isMenuOpen || !IsVisible)
+        {
+            return;
+        }
+
+        if (!TryUpdateTaskbarLayout(out var widgetsBounds))
+        {
+            TaskbarOverlay.Opacity = 0;
+            return;
+        }
+
+        var isHorizontal = taskbarBounds.Width >= taskbarBounds.Height;
+        if (!isHorizontal)
+        {
+            TaskbarOverlay.Opacity = 0;
+            return;
+        }
+
+        var isAutoHidden = taskbarBounds.Top >= taskbarScreenBounds.Bottom - 2
+            || taskbarBounds.Bottom <= taskbarScreenBounds.Top + 2;
+        if (isAutoHidden)
+        {
+            TaskbarOverlay.Opacity = 0;
+            return;
+        }
+
+        var compactHeight = Math.Clamp(
+            taskbarBounds.Height - TaskbarVerticalMargin * 2,
+            32,
+            40);
+        var anchorRight = widgetsBounds?.Right ?? taskbarBounds.Left + TaskbarFallbackWidgetWidth;
+        taskbarCompactLeft = Math.Clamp(
+            anchorRight + TaskbarWidgetGap,
+            taskbarBounds.Left + 4,
+            taskbarBounds.Right - TaskbarCompactWidth - 4);
+
+        Width = TaskbarCompactWidth;
+        Height = compactHeight;
+        Left = taskbarCompactLeft;
+        Top = taskbarBounds.Top + (taskbarBounds.Height - compactHeight) / 2;
+        TaskbarOverlay.Opacity = 1;
+    }
+
+    private void PositionExpandedMenu()
+    {
+        if (!UseTaskbarOverlay)
+        {
+            return;
+        }
+
+        if ((taskbarBounds.Width <= 0 || taskbarBounds.Height <= 0)
+            && !TryUpdateTaskbarLayout(out _))
+        {
+            return;
+        }
+
+        var taskbarIsAtTop = Math.Abs(taskbarBounds.Top - taskbarScreenBounds.Top)
+            < Math.Abs(taskbarScreenBounds.Bottom - taskbarBounds.Bottom);
+        Left = Math.Clamp(
+            taskbarCompactLeft,
+            taskbarScreenBounds.Left + 8,
+            taskbarScreenBounds.Right - MenuWidth - 8);
+        var desiredTop = taskbarIsAtTop
+            ? taskbarBounds.Bottom + 8
+            : taskbarBounds.Top - MenuHeight - 8;
+        Top = Math.Clamp(
+            desiredTop,
+            taskbarScreenBounds.Top + 8,
+            taskbarScreenBounds.Bottom - MenuHeight - 8);
+    }
+
+    private bool TryUpdateTaskbarLayout(out Rect? widgetsBounds)
+    {
+        widgetsBounds = null;
+        var taskbarHandle = FindWindow("Shell_TrayWnd", null);
+        if (taskbarHandle == IntPtr.Zero || !GetWindowRect(taskbarHandle, out var nativeBounds))
+        {
+            return false;
+        }
+
+        var dpiScale = Math.Max(GetDpiForWindow(taskbarHandle) / 96.0, 1);
+        taskbarBounds = ToDeviceIndependentRect(nativeBounds, dpiScale);
+
+        var screen = Forms.Screen.FromHandle(taskbarHandle);
+        taskbarScreenBounds = ToDeviceIndependentRect(screen.Bounds, dpiScale);
+
+        if (taskbarHandle != lastTaskbarHandle)
+        {
+            lastTaskbarHandle = taskbarHandle;
+            cachedWidgetsBounds = null;
+            widgetsBoundsCheckedAtUtc = DateTime.MinValue;
+        }
+
+        if (DateTime.UtcNow - widgetsBoundsCheckedAtUtc > TimeSpan.FromSeconds(5))
+        {
+            cachedWidgetsBounds = FindWidgetsButtonBounds(taskbarHandle, dpiScale, taskbarBounds);
+            widgetsBoundsCheckedAtUtc = DateTime.UtcNow;
+        }
+
+        widgetsBounds = cachedWidgetsBounds;
+        return true;
+    }
+
+    private static Rect? FindWidgetsButtonBounds(IntPtr taskbarHandle, double dpiScale, Rect taskbar)
+    {
+        try
+        {
+            var root = AutomationElement.FromHandle(taskbarHandle);
+            var elements = root.FindAll(TreeScope.Descendants, Condition.TrueCondition);
+            Rect? bestMatch = null;
+
+            foreach (AutomationElement element in elements)
+            {
+                var name = element.Current.Name ?? "";
+                var automationId = element.Current.AutomationId ?? "";
+                var isWidgetsElement = automationId.Contains("widget", StringComparison.OrdinalIgnoreCase)
+                    || name.Contains("widget", StringComparison.OrdinalIgnoreCase)
+                    || name.Contains("ウィジェット", StringComparison.OrdinalIgnoreCase)
+                    || name.Contains('°');
+                if (!isWidgetsElement)
+                {
+                    continue;
+                }
+
+                var physicalBounds = element.Current.BoundingRectangle;
+                var bounds = new Rect(
+                    physicalBounds.Left / dpiScale,
+                    physicalBounds.Top / dpiScale,
+                    physicalBounds.Width / dpiScale,
+                    physicalBounds.Height / dpiScale);
+                if (bounds.Width < 24 || bounds.Height < 20 || !bounds.IntersectsWith(taskbar))
+                {
+                    continue;
+                }
+
+                if (bestMatch is null || bounds.Width > bestMatch.Value.Width)
+                {
+                    bestMatch = bounds;
+                }
+            }
+
+            return bestMatch;
+        }
+        catch (ElementNotAvailableException)
+        {
+            return null;
+        }
+        catch (InvalidOperationException)
+        {
+            return null;
+        }
+        catch (COMException)
+        {
+            return null;
+        }
+    }
+
+    private static Rect ToDeviceIndependentRect(NativeRect bounds, double dpiScale)
+    {
+        return new Rect(
+            bounds.Left / dpiScale,
+            bounds.Top / dpiScale,
+            (bounds.Right - bounds.Left) / dpiScale,
+            (bounds.Bottom - bounds.Top) / dpiScale);
+    }
+
+    private static Rect ToDeviceIndependentRect(Drawing.Rectangle bounds, double dpiScale)
+    {
+        return new Rect(
+            bounds.Left / dpiScale,
+            bounds.Top / dpiScale,
+            bounds.Width / dpiScale,
+            bounds.Height / dpiScale);
     }
 
     private void ToggleMenu()
@@ -166,7 +389,9 @@ public partial class MainWindow : Window
         Width = MenuWidth;
         Height = MenuHeight;
         MenuPanel.Visibility = Visibility.Visible;
+        TaskbarOverlay.Visibility = Visibility.Collapsed;
         CompactOverlay.Visibility = Visibility.Collapsed;
+        PositionExpandedMenu();
 
         MenuControls.Opacity = 0;
         VisualizerGrid.Opacity = 0;
@@ -206,11 +431,9 @@ public partial class MainWindow : Window
         {
             timer.Stop();
             MenuPanel.Visibility = Visibility.Collapsed;
-            CompactOverlay.Visibility = Visibility.Visible;
             StopRingRotation();
             StopAlbumRotation();
-            Width = CompactWidth;
-            Height = CompactHeight;
+            ShowCompactSurface();
         };
         timer.Start();
     }
@@ -237,6 +460,7 @@ public partial class MainWindow : Window
             var nextTrackKey = GetTrackKey(currentTrack);
             TitleText.Text = currentTrack.Title;
             ArtistText.Text = currentTrack.Artist;
+            TaskbarTitleText.Text = currentTrack.Title;
             MenuTitleText.Text = currentTrack.Title;
             MenuArtistText.Text = $"BY {currentTrack.Artist}";
             PauseIcon.Visibility = currentTrack.IsPlaying ? Visibility.Visible : Visibility.Collapsed;
@@ -261,15 +485,18 @@ public partial class MainWindow : Window
         isPlaybackMoving = false;
         TitleText.Text = title;
         ArtistText.Text = subtitle;
+        TaskbarTitleText.Text = title;
         MenuTitleText.Text = title;
         MenuArtistText.Text = subtitle;
         PauseIcon.Visibility = Visibility.Collapsed;
         PlayIcon.Visibility = Visibility.Visible;
         UpdateAlbumRotation();
         AlbumArtBox.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(35, 35, 40));
+        TaskbarAlbumArtBox.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(35, 35, 40));
         MenuAlbumArtBox.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(35, 35, 40));
         MenuBackdrop.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(35, 35, 40));
         AlbumPlaceholder.Visibility = Visibility.Visible;
+        TaskbarAlbumPlaceholder.Visibility = Visibility.Visible;
         SetProgressSource(0, 1, false);
         UpdateSmoothProgress();
     }
@@ -279,13 +506,16 @@ public partial class MainWindow : Window
         if (bytes is null || bytes.Length == 0)
         {
             AlbumArtBox.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(35, 35, 40));
+            TaskbarAlbumArtBox.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(35, 35, 40));
             MenuAlbumArtBox.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(35, 35, 40));
             MenuBackdrop.Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(35, 35, 40));
             AlbumPlaceholder.Visibility = Visibility.Visible;
+            TaskbarAlbumPlaceholder.Visibility = Visibility.Visible;
             return;
         }
 
         AlbumPlaceholder.Visibility = Visibility.Collapsed;
+        TaskbarAlbumPlaceholder.Visibility = Visibility.Collapsed;
         var image = new BitmapImage();
         using var stream = new MemoryStream(bytes);
         image.BeginInit();
@@ -302,12 +532,17 @@ public partial class MainWindow : Window
         {
             Stretch = Stretch.UniformToFill
         };
+        var taskbarBrush = new ImageBrush(image)
+        {
+            Stretch = Stretch.UniformToFill
+        };
         var backdropBrush = new ImageBrush(image)
         {
             Stretch = Stretch.UniformToFill
         };
 
         AlbumArtBox.Background = compactBrush;
+        TaskbarAlbumArtBox.Background = taskbarBrush;
         MenuAlbumArtBox.Background = menuBrush;
         MenuBackdrop.Background = backdropBrush;
     }
@@ -330,6 +565,7 @@ public partial class MainWindow : Window
         var progressMs = GetVisibleProgressMs();
         var scale = Math.Clamp((double)progressMs / lastDurationMs, 0, 1);
         ProgressScale.ScaleX = currentTrack is null ? 0 : Math.Max(scale, 0.02);
+        TaskbarProgressScale.ScaleX = currentTrack is null ? 0 : Math.Max(scale, 0.02);
         if (!isSeeking)
         {
             MenuSeekSlider.Maximum = lastDurationMs;
@@ -511,6 +747,24 @@ public partial class MainWindow : Window
 
         return IntPtr.Zero;
     }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct NativeRect
+    {
+        public int Left;
+        public int Top;
+        public int Right;
+        public int Bottom;
+    }
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern IntPtr FindWindow(string lpClassName, string? lpWindowName);
+
+    [DllImport("user32.dll")]
+    private static extern bool GetWindowRect(IntPtr hWnd, out NativeRect lpRect);
+
+    [DllImport("user32.dll")]
+    private static extern uint GetDpiForWindow(IntPtr hWnd);
 
     [DllImport("user32.dll")]
     private static extern bool RegisterHotKey(IntPtr hWnd, int id, int fsModifiers, int vk);

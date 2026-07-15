@@ -8,8 +8,8 @@ RELATED FILES: MainWindow.xaml.cs, Services/SpotifyPlaybackService.cs, Models/Sp
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="SpotiFloat"
-        Width="342"
-        Height="92"
+        Width="228"
+        Height="36"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"
@@ -120,7 +120,62 @@ RELATED FILES: MainWindow.xaml.cs, Services/SpotifyPlaybackService.cs, Models/Sp
     </Window.Resources>
 
     <Grid>
-        <Grid x:Name="CompactOverlay">
+        <Grid x:Name="TaskbarOverlay" Opacity="0" Cursor="Hand">
+            <Border Background="#E90D0F14"
+                    BorderBrush="#706C7486"
+                    BorderThickness="1"
+                    CornerRadius="8">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="36" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Width="28"
+                            Height="28"
+                            Margin="4"
+                            Background="{StaticResource PopupBorderBrush}"
+                            CornerRadius="6">
+                        <Border x:Name="TaskbarAlbumArtBox"
+                                Margin="1.5"
+                                Background="#FF23252D"
+                                CornerRadius="5">
+                            <TextBlock x:Name="TaskbarAlbumPlaceholder"
+                                       Foreground="#FF8E929E"
+                                       FontSize="6"
+                                       Text="S"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center" />
+                        </Border>
+                    </Border>
+
+                    <Grid Grid.Column="1" Margin="7,0,10,0">
+                        <TextBlock x:Name="TaskbarTitleText"
+                                   VerticalAlignment="Center"
+                                   Foreground="#FFF5F6FA"
+                                   FontFamily="Segoe UI Variable Text"
+                                   FontSize="11"
+                                   FontWeight="SemiBold"
+                                   Text="SpotiFloat"
+                                   TextTrimming="CharacterEllipsis" />
+                        <Grid Height="2"
+                              Margin="0,0,0,3"
+                              VerticalAlignment="Bottom">
+                            <Border Background="#603A3E49" CornerRadius="1" />
+                            <Border Background="{StaticResource AccentBrush}"
+                                    CornerRadius="1"
+                                    RenderTransformOrigin="0,0.5">
+                                <Border.RenderTransform>
+                                    <ScaleTransform x:Name="TaskbarProgressScale" ScaleX="0" />
+                                </Border.RenderTransform>
+                            </Border>
+                        </Grid>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Grid x:Name="CompactOverlay" Visibility="Collapsed">
             <Border Margin="34,14,8,10"
                     Padding="72,11,16,9"
                     Background="#F20D0F14"
@@ -204,7 +259,7 @@ RELATED FILES: MainWindow.xaml.cs, Services/SpotifyPlaybackService.cs, Models/Sp
                 BorderThickness="2"
                 CornerRadius="14"
                 ClipToBounds="True"
-                RenderTransformOrigin="0.08,0.12">
+                RenderTransformOrigin="0.08,0.92">
             <Border.BorderBrush>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
                     <LinearGradientBrush.RelativeTransform>
