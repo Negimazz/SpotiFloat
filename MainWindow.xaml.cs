@@ -28,6 +28,8 @@ public partial class MainWindow : Window
     private const int ModControl = 0x0002;
     private const int VirtualKeyM = 0x4D;
     private const int WmHotkey = 0x0312;
+    private const uint EventSystemForeground = 0x0003;
+    private const uint WineventSkipOwnProcess = 0x0002;
     private const int ProgressRollbackToleranceMs = 900;
     private const uint SwpNoSize = 0x0001;
     private const uint SwpNoMove = 0x0002;
@@ -49,8 +51,10 @@ public partial class MainWindow : Window
     private readonly DispatcherTimer progressTimer = new();
     private readonly DispatcherTimer visualizerTimer = new();
     private readonly DispatcherTimer taskbarTimer = new();
+    private readonly DispatcherTimer zOrderRestoreTimer = new();
     private readonly Forms.NotifyIcon trayIcon = new();
     private readonly AudioVisualizerService audioVisualizerService = new();
+    private readonly WinEventDelegate foregroundEventDelegate;
 
     private DateTime progressUpdatedAtUtc;
     private int lastProgressMs;
@@ -67,11 +71,13 @@ public partial class MainWindow : Window
     private IntPtr lastTaskbarHandle;
     private Rect? cachedWidgetsBounds;
     private DateTime widgetsBoundsCheckedAtUtc;
+    private IntPtr foregroundEventHook;
     private SpotifyNowPlaying? currentTrack;
 
     public MainWindow()
     {
         InitializeComponent();
+        foregroundEventDelegate = ForegroundWindowChanged;
 
         refreshTimer.Interval = TimeSpan.FromSeconds(2);
         refreshTimer.Tick += async (_, _) => await RefreshPlaybackAsync();
@@ -79,8 +85,14 @@ public partial class MainWindow : Window
         progressTimer.Tick += (_, _) => UpdateSmoothProgress();
         visualizerTimer.Interval = TimeSpan.FromMilliseconds(65);
         visualizerTimer.Tick += (_, _) => UpdateVisualizer();
-        taskbarTimer.Interval = TimeSpan.FromMilliseconds(250);
+        taskbarTimer.Interval = TimeSpan.FromSeconds(1);
         taskbarTimer.Tick += (_, _) => PositionTaskbarOverlay();
+        zOrderRestoreTimer.Interval = TimeSpan.FromMilliseconds(180);
+        zOrderRestoreTimer.Tick += (_, _) =>
+        {
+            zOrderRestoreTimer.Stop();
+            KeepTaskbarOverlayAboveTaskbar();
+        };
 
         ConfigureTrayIcon();
     }
@@ -92,6 +104,14 @@ public partial class MainWindow : Window
         var source = HwndSource.FromHwnd(new WindowInteropHelper(this).Handle);
         source?.AddHook(WndProc);
         RegisterHotKey(source?.Handle ?? IntPtr.Zero, HotkeyId, ModControl | ModAlt, VirtualKeyM);
+        foregroundEventHook = SetWinEventHook(
+            EventSystemForeground,
+            EventSystemForeground,
+            IntPtr.Zero,
+            foregroundEventDelegate,
+            0,
+            0,
+            WineventSkipOwnProcess);
     }
 
     private async void Window_Loaded(object sender, RoutedEventArgs e)
@@ -117,7 +137,12 @@ public partial class MainWindow : Window
         trayIcon.Visible = false;
         trayIcon.Dispose();
         taskbarTimer.Stop();
+        zOrderRestoreTimer.Stop();
         audioVisualizerService.Dispose();
+        if (foregroundEventHook != IntPtr.Zero)
+        {
+            UnhookWinEvent(foregroundEventHook);
+        }
         UnregisterHotKey(new WindowInteropHelper(this).Handle, HotkeyId);
     }
 
@@ -211,7 +236,6 @@ public partial class MainWindow : Window
 
         if (isMenuOpen)
         {
-            KeepTaskbarOverlayAboveTaskbar();
             return;
         }
 
@@ -246,6 +270,14 @@ public partial class MainWindow : Window
             taskbarBounds.Left + 4,
             taskbarBounds.Right - TaskbarCompactWidth - 4);
 
+        var positionChanged = CompactOverlay.Visibility == Visibility.Visible
+            || TaskbarOverlay.Visibility != Visibility.Visible
+            || TaskbarOverlay.Opacity < 1
+            || Math.Abs(Width - TaskbarCompactWidth) > 0.1
+            || Math.Abs(Height - compactHeight) > 0.1
+            || Math.Abs(Left - taskbarCompactLeft) > 0.1
+            || Math.Abs(Top - (taskbarBounds.Top + (taskbarBounds.Height - compactHeight) / 2)) > 0.1;
+
         CompactOverlay.Visibility = Visibility.Collapsed;
         TaskbarOverlay.Visibility = Visibility.Visible;
         Width = TaskbarCompactWidth;
@@ -253,7 +285,40 @@ public partial class MainWindow : Window
         Left = taskbarCompactLeft;
         Top = taskbarBounds.Top + (taskbarBounds.Height - compactHeight) / 2;
         TaskbarOverlay.Opacity = 1;
+        if (positionChanged)
+        {
+            KeepTaskbarOverlayAboveTaskbar();
+        }
+    }
+
+    private void ForegroundWindowChanged(
+        IntPtr eventHook,
+        uint eventType,
+        IntPtr windowHandle,
+        int objectId,
+        int childId,
+        uint eventThread,
+        uint eventTime)
+    {
+        if (windowHandle == IntPtr.Zero)
+        {
+            return;
+        }
+
+        Dispatcher.BeginInvoke(new Action(ScheduleZOrderRestore));
+    }
+
+    private void ScheduleZOrderRestore()
+    {
+        if (!IsVisible || TaskbarOverlay.Visibility != Visibility.Visible)
+        {
+            return;
+        }
+
+        // Restore twice around the shell transition without continuously fighting its flyouts.
         KeepTaskbarOverlayAboveTaskbar();
+        zOrderRestoreTimer.Stop();
+        zOrderRestoreTimer.Start();
     }
 
     private void KeepTaskbarOverlayAboveTaskbar()
@@ -814,6 +879,15 @@ public partial class MainWindow : Window
         public int Bottom;
     }
 
+    private delegate void WinEventDelegate(
+        IntPtr eventHook,
+        uint eventType,
+        IntPtr windowHandle,
+        int objectId,
+        int childId,
+        uint eventThread,
+        uint eventTime);
+
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     private static extern IntPtr FindWindow(string lpClassName, string? lpWindowName);
 
@@ -832,6 +906,19 @@ public partial class MainWindow : Window
         int width,
         int height,
         uint flags);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr SetWinEventHook(
+        uint eventMin,
+        uint eventMax,
+        IntPtr moduleHandle,
+        WinEventDelegate callback,
+        uint processId,
+        uint threadId,
+        uint flags);
+
+    [DllImport("user32.dll")]
+    private static extern bool UnhookWinEvent(IntPtr eventHook);
 
     [DllImport("user32.dll")]
     private static extern bool RegisterHotKey(IntPtr hWnd, int id, int fsModifiers, int vk);
