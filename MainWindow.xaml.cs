@@ -35,8 +35,8 @@ public partial class MainWindow : Window
     private const uint SwpShowWindow = 0x0040;
     private static readonly IntPtr HwndTopmost = new(-1);
     private static readonly bool UseTaskbarOverlay = true;
-    private const double TaskbarCompactWidth = 228;
-    private const double TaskbarVerticalMargin = 6;
+    private const double TaskbarCompactWidth = 250;
+    private const double TaskbarVerticalMargin = 3;
     private const double TaskbarWidgetGap = 8;
     private const double TaskbarFallbackWidgetWidth = 152;
     private const double CompactWidth = 342;
@@ -231,7 +231,7 @@ public partial class MainWindow : Window
         var compactHeight = Math.Clamp(
             taskbarBounds.Height - TaskbarVerticalMargin * 2,
             32,
-            40);
+            44);
         var anchorRight = widgetsBounds?.Right ?? taskbarBounds.Left + TaskbarFallbackWidgetWidth;
         taskbarCompactLeft = Math.Clamp(
             anchorRight + TaskbarWidgetGap,
