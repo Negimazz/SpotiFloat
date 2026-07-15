@@ -29,7 +29,7 @@ public partial class MainWindow : Window
     private const int VirtualKeyM = 0x4D;
     private const int WmHotkey = 0x0312;
     private const int ProgressRollbackToleranceMs = 900;
-    private const bool UseTaskbarOverlay = true;
+    private static readonly bool UseTaskbarOverlay = true;
     private const double TaskbarCompactWidth = 228;
     private const double TaskbarVerticalMargin = 6;
     private const double TaskbarWidgetGap = 8;
@@ -305,7 +305,9 @@ public partial class MainWindow : Window
         try
         {
             var root = AutomationElement.FromHandle(taskbarHandle);
-            var elements = root.FindAll(TreeScope.Descendants, Condition.TrueCondition);
+            var elements = root.FindAll(
+                TreeScope.Descendants,
+                System.Windows.Automation.Condition.TrueCondition);
             Rect? bestMatch = null;
 
             foreach (AutomationElement element in elements)

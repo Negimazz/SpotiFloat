@@ -14,10 +14,6 @@ RELATED FILES: App.xaml, MainWindow.xaml, Services/SpotifyPlaybackService.cs
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="UIAutomationClient" />
-    <Reference Include="UIAutomationTypes" />
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="NAudio" Version="2.2.1" />
   </ItemGroup>
 </Project>
