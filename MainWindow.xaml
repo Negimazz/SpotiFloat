@@ -133,7 +133,7 @@ RELATED FILES: MainWindow.xaml.cs, Services/SpotifyPlaybackService.cs, Models/Sp
 
                     <Border Width="34"
                             Height="34"
-                            Margin="4"
+                            Margin="4,3"
                             Background="{StaticResource PopupBorderBrush}"
                             CornerRadius="9">
                         <Border x:Name="TaskbarAlbumArtBox"
@@ -263,6 +263,12 @@ RELATED FILES: MainWindow.xaml.cs, Services/SpotifyPlaybackService.cs, Models/Sp
             </Border>
         </Grid>
 
+        <Popup x:Name="MenuPopup"
+               AllowsTransparency="True"
+               Placement="Top"
+               PlacementTarget="{Binding ElementName=TaskbarOverlay}"
+               StaysOpen="True"
+               VerticalOffset="-8">
         <Border x:Name="MenuPanel"
                 Width="500"
                 Height="330"
@@ -544,5 +550,6 @@ RELATED FILES: MainWindow.xaml.cs, Services/SpotifyPlaybackService.cs, Models/Sp
                 </Grid>
             </Grid>
         </Border>
+        </Popup>
     </Grid>
 </Window>

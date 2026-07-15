@@ -123,9 +123,10 @@ public partial class MainWindow : Window
 
     private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (UseTaskbarOverlay && !isMenuOpen && TaskbarOverlay.Visibility == Visibility.Visible)
+        var compactSurfaceIsClicked = TaskbarOverlay.IsMouseOver || CompactOverlay.IsMouseOver;
+        if (UseTaskbarOverlay && compactSurfaceIsClicked)
         {
-            OpenMenu();
+            ToggleMenu();
             return;
         }
 
@@ -184,6 +185,7 @@ public partial class MainWindow : Window
 
     private void ShowCompactSurface()
     {
+        MenuPopup.IsOpen = false;
         MenuPanel.Visibility = Visibility.Collapsed;
         if (UseTaskbarOverlay)
         {
@@ -202,8 +204,14 @@ public partial class MainWindow : Window
 
     private void PositionTaskbarOverlay()
     {
-        if (!UseTaskbarOverlay || isMenuOpen || !IsVisible)
+        if (!UseTaskbarOverlay || !IsVisible)
         {
+            return;
+        }
+
+        if (isMenuOpen)
+        {
+            KeepTaskbarOverlayAboveTaskbar();
             return;
         }
 
@@ -433,12 +441,11 @@ public partial class MainWindow : Window
     private void OpenMenu()
     {
         isMenuOpen = true;
-        Width = MenuWidth;
-        Height = MenuHeight;
         MenuPanel.Visibility = Visibility.Visible;
-        TaskbarOverlay.Visibility = Visibility.Collapsed;
-        CompactOverlay.Visibility = Visibility.Collapsed;
-        PositionExpandedMenu();
+        MenuPopup.PlacementTarget = TaskbarOverlay.Visibility == Visibility.Visible
+            ? TaskbarOverlay
+            : CompactOverlay;
+        MenuPopup.IsOpen = true;
 
         MenuControls.Opacity = 0;
         VisualizerGrid.Opacity = 0;
@@ -477,6 +484,7 @@ public partial class MainWindow : Window
         timer.Tick += (_, _) =>
         {
             timer.Stop();
+            MenuPopup.IsOpen = false;
             MenuPanel.Visibility = Visibility.Collapsed;
             StopRingRotation();
             StopAlbumRotation();
