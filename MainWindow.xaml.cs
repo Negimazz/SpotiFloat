@@ -35,6 +35,7 @@ public partial class MainWindow : Window
     private const int ShellWindowActivated = 4;
     private const int ShellRedraw = 6;
     private const int ShellRudeAppActivated = 0x8004;
+    private const int GwlpHwndParent = -8;
     private const int ProgressRollbackToleranceMs = 900;
     private const uint SwpNoSize = 0x0001;
     private const uint SwpNoMove = 0x0002;
@@ -74,6 +75,7 @@ public partial class MainWindow : Window
     private Rect taskbarScreenBounds;
     private double taskbarCompactLeft;
     private IntPtr lastTaskbarHandle;
+    private IntPtr ownedTaskbarHandle;
     private Rect? cachedWidgetsBounds;
     private DateTime widgetsBoundsCheckedAtUtc;
     private IntPtr foregroundEventHook;
@@ -153,6 +155,7 @@ public partial class MainWindow : Window
             UnhookWinEvent(foregroundEventHook);
         }
         var windowHandle = new WindowInteropHelper(this).Handle;
+        DetachTaskbarOwner(windowHandle);
         DeregisterShellHookWindow(windowHandle);
         UnregisterHotKey(windowHandle, HotkeyId);
     }
@@ -410,6 +413,8 @@ public partial class MainWindow : Window
             return false;
         }
 
+        AttachTaskbarOwner(taskbarHandle);
+
         var dpiScale = Math.Max(GetDpiForWindow(taskbarHandle) / 96.0, 1);
         taskbarBounds = ToDeviceIndependentRect(nativeBounds, dpiScale);
 
@@ -431,6 +436,41 @@ public partial class MainWindow : Window
 
         widgetsBounds = cachedWidgetsBounds;
         return true;
+    }
+
+    private void AttachTaskbarOwner(IntPtr taskbarHandle)
+    {
+        if (taskbarHandle == ownedTaskbarHandle)
+        {
+            return;
+        }
+
+        var windowHandle = new WindowInteropHelper(this).Handle;
+        if (windowHandle == IntPtr.Zero)
+        {
+            return;
+        }
+
+        SetWindowOwner(windowHandle, taskbarHandle);
+        ownedTaskbarHandle = taskbarHandle;
+    }
+
+    private void DetachTaskbarOwner(IntPtr windowHandle)
+    {
+        if (windowHandle == IntPtr.Zero || ownedTaskbarHandle == IntPtr.Zero)
+        {
+            return;
+        }
+
+        SetWindowOwner(windowHandle, IntPtr.Zero);
+        ownedTaskbarHandle = IntPtr.Zero;
+    }
+
+    private static IntPtr SetWindowOwner(IntPtr windowHandle, IntPtr ownerHandle)
+    {
+        return IntPtr.Size == 8
+            ? SetWindowLongPtr64(windowHandle, GwlpHwndParent, ownerHandle)
+            : new IntPtr(SetWindowLong32(windowHandle, GwlpHwndParent, ownerHandle.ToInt32()));
     }
 
     private static Rect? FindWidgetsButtonBounds(IntPtr taskbarHandle, double dpiScale, Rect taskbar)
@@ -937,6 +977,18 @@ public partial class MainWindow : Window
         int width,
         int height,
         uint flags);
+
+    [DllImport("user32.dll", EntryPoint = "SetWindowLongPtrW", SetLastError = true)]
+    private static extern IntPtr SetWindowLongPtr64(
+        IntPtr hWnd,
+        int index,
+        IntPtr newLong);
+
+    [DllImport("user32.dll", EntryPoint = "SetWindowLongW", SetLastError = true)]
+    private static extern int SetWindowLong32(
+        IntPtr hWnd,
+        int index,
+        int newLong);
 
     [DllImport("user32.dll")]
     private static extern IntPtr SetWinEventHook(
