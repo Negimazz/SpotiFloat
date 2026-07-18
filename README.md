@@ -7,22 +7,15 @@ RELATED FILES: SpotiFloat.csproj, MainWindow.xaml, Services/SpotifyPlaybackServi
 
 # SpotiFloat
 
-Spotifyデスクトップアプリで再生中の曲だけを表示する、小さなWindows用オーバーレイアプリです。
+Spotifyデスクトップアプリで再生中の曲をタスクバーに表示する、Windows用オーバーレイアプリです。
 
 ## できること
 
-- 画面の最前面に小さく表示します。
+- タスクバーの左側(ウィジェットの右横)に小さく表示します。
 - Windowsのメディアセッションから現在再生中の曲を取得します。
 - Spotifyのセッションだけを対象にします。
 - ウィンドウはドラッグで移動できます。
 - タスクトレイの右クリックメニューから表示切替と終了ができます。
-
-## 必要なもの
-
-- Spotifyデスクトップアプリ
-- Spotifyで再生中の曲
-
-Spotify Developer Dashboard、Client ID、ログイン連携は不要です。
 
 ## 起動
 
